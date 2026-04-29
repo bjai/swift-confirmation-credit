@@ -3,26 +3,26 @@ Write-Host "UserProfile: $env:USERPROFILE"
 whoami
 # 1. Handle NestJS Backend
 echo "Deploying NestJS..."
-cd backend
+Set-Location "$PSScriptRoot\backend"
 npm install
 npm run build
 
-# PowerShell-friendly PM2 logic
-$pm2Path = "C:\Users\Administrator\AppData\Roaming\npm\pm2.ps1"
+# Use pm2.cmd to avoid PowerShell execution policy blocking pm2.ps1
+$pm2 = "pm2.cmd"
 
 # Check if the process is already running
-$processExists = & $pm2Path list | Select-String "nest-backend-api"
+$processExists = & $pm2 list 2>&1 | Select-String "nest-backend-api"
 
 if ($processExists) {
     echo "Restarting existing process..."
-    & $pm2Path restart nest-backend-api --update-env
+    & $pm2 restart nest-backend-api --update-env
 } else {
     echo "Starting new process..."
-    & $pm2Path start dist/main.js --name nest-backend-api
+    & $pm2 start dist/main.js --name nest-backend-api
 }
 
 # 2. Handle Angular Frontend
 echo "Deploying Angular..."
-cd ../frontend
+Set-Location "$PSScriptRoot\frontend"
 npm install
-npm run build --configuration=production
+npm run build
