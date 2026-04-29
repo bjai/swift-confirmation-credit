@@ -9,7 +9,7 @@ cd backend
 npm install
 npm run build
 # Start or Restart with PM2
-pm2 restart nest-backend-api --update-env || pm2 start dist/main.js --name nest-backend-api
+C:\Users\Administrator\AppData\Roaming\npm\pm2.ps1 restart nest-backend-api --update-env || pm2 start dist/main.js --name nest-backend-api
 
 # 2. Handle Angular Frontend
 echo "Deploying Angular..."
