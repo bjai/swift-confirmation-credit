@@ -1,8 +1,19 @@
-name: Debug Environment
+name: Production Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to Windows Server
+    runs-on: self-hosted
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Run Deployment Script
         shell: powershell
         run: |
-          Write-Host "Current Location: $(Get-Location)"
-          Get-ChildItem  # This lists files to verify deploy.ps1 is there
-          npm --version
-          pm2 --version
           .\deploy.ps1
