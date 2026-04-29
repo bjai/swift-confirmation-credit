@@ -1,17 +1,8 @@
-name: Production Deployment
-
-on:
-  push:
-    branches: [ main ] # Triggered when you push to the main branch
-
-jobs:
-  deploy:
-    runs-on: self-hosted # This tells GitHub to use your EC2 runner
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Execute Deployment Script
+name: Debug Environment
         shell: powershell
         run: |
+          Write-Host "Current Location: $(Get-Location)"
+          Get-ChildItem  # This lists files to verify deploy.ps1 is there
+          npm --version
+          pm2 --version
           .\deploy.ps1
