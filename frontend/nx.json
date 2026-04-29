@@ -1,0 +1,17 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "defaultBase": "main",
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "production": ["default", "!{projectRoot}/**/*.spec.ts"],
+    "sharedGlobals": []
+  },
+  "targetDefaults": {
+    "build": { "dependsOn": ["^build"], "cache": true }
+  },
+  "generators": {
+    "@nx/angular:application": { "style": "scss", "linter": "none", "unitTestRunner": "none" },
+    "@nx/angular:library": { "linter": "none", "unitTestRunner": "none" },
+    "@nx/angular:component": { "style": "scss" }
+  }
+}

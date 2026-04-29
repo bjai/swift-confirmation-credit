@@ -1,0 +1,8 @@
+{
+  "name": "mt910",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "libs/mt910/src",
+  "prefix": "lib",
+  "tags": ["type:lib", "domain:mt910"]
+}

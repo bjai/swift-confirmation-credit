@@ -1,0 +1,51 @@
+{
+  "name": "mt910-app",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "prefix": "app",
+  "sourceRoot": "apps/mt910-app/src",
+  "tags": ["type:app"],
+  "targets": {
+    "build": {
+      "executor": "@angular-devkit/build-angular:application",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/mt910-app",
+        "index": "apps/mt910-app/src/index.html",
+        "browser": "apps/mt910-app/src/main.ts",
+        "polyfills": ["zone.js"],
+        "tsConfig": "apps/mt910-app/tsconfig.app.json",
+        "assets": [{ "glob": "**/*", "input": "apps/mt910-app/src/assets", "output": "assets" }],
+        "styles": [
+          "node_modules/bootstrap/dist/css/bootstrap.min.css",
+          "apps/mt910-app/src/styles.scss"
+        ],
+        "scripts": []
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            { "type": "initial", "maximumWarning": "500kb", "maximumError": "1mb" },
+            { "type": "anyComponentStyle", "maximumWarning": "2kb", "maximumError": "4kb" }
+          ],
+          "outputHashing": "all"
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "executor": "@angular-devkit/build-angular:dev-server",
+      "options": { "proxyConfig": "apps/mt910-app/src/proxy.conf.json" },
+      "configurations": {
+        "production": { "buildTarget": "mt910-app:build:production" },
+        "development": { "buildTarget": "mt910-app:build:development" }
+      },
+      "defaultConfiguration": "development"
+    }
+  }
+}

@@ -1,0 +1,65 @@
+version: '3.9'
+
+services:
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: swift-backend
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      INPUT_FOLDER: /data/input
+      PROCESSED_FOLDER: /data/processed
+      REJECTED_FOLDER: /data/rejected
+    volumes:
+      - mt_input:/data/input
+      - mt_processed:/data/processed
+      - mt_rejected:/data/rejected
+    networks:
+      - swift-net
+    expose:
+      - "3000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: swift-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - swift-net
+
+volumes:
+  mt_input:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${INPUT_FOLDER:-D:/config/mt}
+  mt_processed:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PROCESSED_FOLDER:-D:/config/mt/processed}
+  mt_rejected:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${REJECTED_FOLDER:-D:/config/mt/rejected}
+
+networks:
+  swift-net:
+    driver: bridge
