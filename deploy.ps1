@@ -1,22 +1,25 @@
-# Stop script on first error
-$ErrorActionPreference = "Stop"
-
-echo "--- Starting Deployment ---"
-
 # 1. Handle NestJS Backend
 echo "Deploying NestJS..."
 cd backend
 npm install
 npm run build
-# Start or Restart with PM2
-C:\Users\Administrator\AppData\Roaming\npm\pm2.ps1 restart nest-backend-api --update-env || pm2 start dist/main.js --name nest-backend-api
+
+# PowerShell-friendly PM2 logic
+$pm2Path = "C:\Users\Administrator\AppData\Roaming\npm\pm2.ps1"
+
+# Check if the process is already running
+$processExists = & $pm2Path list | Select-String "nest-backend-api"
+
+if ($processExists) {
+    echo "Restarting existing process..."
+    & $pm2Path restart nest-backend-api --update-env
+} else {
+    echo "Starting new process..."
+    & $pm2Path start dist/main.js --name nest-backend-api
+}
 
 # 2. Handle Angular Frontend
 echo "Deploying Angular..."
 cd ../frontend
 npm install
 npm run build --configuration=production
-
-# Note: For Angular, you simply point your IIS site to the 
-# folder: C:\actions-runner\_work\your-repo\your-repo\frontend\dist\your-app-name\browser
-echo "--- Deployment Complete ---"
