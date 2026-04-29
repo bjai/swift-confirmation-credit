@@ -1,0 +1,17 @@
+name: Production Deployment
+
+on:
+  push:
+    branches: [ main ] # Triggered when you push to the main branch
+
+jobs:
+  deploy:
+    runs-on: self-hosted # This tells GitHub to use your EC2 runner
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Execute Deployment Script
+        shell: powershell
+        run: |
+          .\deploy.ps1
