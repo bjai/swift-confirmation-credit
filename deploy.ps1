@@ -1,3 +1,6 @@
+Write-Host "User: $env:USERNAME"
+Write-Host "UserProfile: $env:USERPROFILE"
+whoami
 # 1. Handle NestJS Backend
 echo "Deploying NestJS..."
 cd backend
