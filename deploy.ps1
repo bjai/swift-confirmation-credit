@@ -2,6 +2,11 @@ Write-Host "User: $env:USERNAME"
 Write-Host "UserProfile: $env:USERPROFILE"
 whoami
 
+# PM2 requires HOMEPATH/HOME - Network Service has no user profile so set it explicitly
+if (-not $env:HOMEPATH) { $env:HOMEPATH = "C:\Users\Administrator" }
+if (-not $env:HOME)     { $env:HOME     = "C:\Users\Administrator" }
+if (-not $env:USERPROFILE) { $env:USERPROFILE = "C:\Users\Administrator" }
+
 # Use system-level npm global path (accessible by all users including Network Service)
 $pm2 = "C:\Program Files\nodejs\pm2.cmd"
 if (-not (Test-Path $pm2)) {
