@@ -88,16 +88,19 @@ New-Item -ItemType Directory -Force "C:\config\mt\rejected"
 
 ## Environment Config (.env)
 
-Location on server:
+The `.env` is stored permanently at `C:\config\swift\.env` on the server.
+The `deploy.ps1` script copies it to the backend folder on every deployment.
+
+> ⚠️ This file is NOT in git. If the EC2 instance is replaced, recreate it manually.
+
+### Permanent location
 ```
-C:\actions-runner\_work\swift-confirmation-credit\swift-confirmation-credit\backend\.env
+C:\config\swift\.env
 ```
 
-> ⚠️ This file is NOT in git (excluded by `.gitignore`).
-> After a fresh clone or runner reset, recreate it manually.
-
-### Recreate .env
+### Recreate if lost
 ```powershell
+New-Item -ItemType Directory -Force "C:\config\swift"
 @"
 PORT=3000
 DB_HOST=database-1.ca1g6eaey1j8.us-east-1.rds.amazonaws.com
@@ -108,7 +111,7 @@ DB_NAME=postgres
 INPUT_FOLDER=C:\config\mt
 PROCESSED_FOLDER=C:\config\mt\processed
 REJECTED_FOLDER=C:\config\mt\rejected
-"@ | Set-Content "C:\actions-runner\_work\swift-confirmation-credit\swift-confirmation-credit\backend\.env"
+"@ | Set-Content "C:\config\swift\.env"
 ```
 
 ---
