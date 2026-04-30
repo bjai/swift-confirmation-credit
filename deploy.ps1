@@ -7,6 +7,9 @@ if (-not $env:HOMEPATH) { $env:HOMEPATH = "C:\Users\Administrator" }
 if (-not $env:HOME)     { $env:HOME     = "C:\Users\Administrator" }
 if (-not $env:USERPROFILE) { $env:USERPROFILE = "C:\Users\Administrator" }
 
+# Point PM2 home to a folder Network Service can access
+$env:PM2_HOME = "C:\pm2-data"
+
 # Use system-level npm global path (accessible by all users including Network Service)
 $pm2 = "C:\Program Files\nodejs\pm2.cmd"
 if (-not (Test-Path $pm2)) {
