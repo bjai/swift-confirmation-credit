@@ -11,7 +11,7 @@ if ($env:PATH -notlike "*$npmGlobal*") {
 
 $pm2 = "$npmGlobal\pm2.cmd"
 if (-not (Test-Path $pm2)) {
-    throw "pm2.cmd not found at $pm2 — run: npm install -g pm2 as Administrator on the EC2 server"
+    throw "pm2.cmd not found at $pm2 - run: npm install -g pm2 as Administrator on the EC2 server"
 }
 
 # 1. Handle NestJS Backend
