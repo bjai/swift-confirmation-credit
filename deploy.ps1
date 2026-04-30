@@ -2,17 +2,13 @@ Write-Host "User: $env:USERNAME"
 Write-Host "UserProfile: $env:USERPROFILE"
 whoami
 
-# Ensure npm global bin is in PATH (runner service may not inherit Administrator's user PATH)
-$npmGlobal = "C:\Users\Administrator\AppData\Roaming\npm"
-if ($env:PATH -notlike "*$npmGlobal*") {
-    $env:PATH = "$npmGlobal;$env:PATH"
-    Write-Host "Added $npmGlobal to PATH"
-}
-
-$pm2 = "$npmGlobal\pm2.cmd"
+# Use system-level npm global path (accessible by all users including Network Service)
+$pm2 = "C:\Program Files\nodejs\pm2.cmd"
 if (-not (Test-Path $pm2)) {
-    throw "pm2.cmd not found at $pm2 - run: npm install -g pm2 as Administrator on the EC2 server"
+    # Fallback: Administrator roaming npm
+    $pm2 = "C:\Users\Administrator\AppData\Roaming\npm\pm2.cmd"
 }
+Write-Host "Using pm2 at: $pm2"
 
 # 1. Handle NestJS Backend
 echo "Deploying NestJS..."
