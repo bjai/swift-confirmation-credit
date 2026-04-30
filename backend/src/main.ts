@@ -8,7 +8,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
   app.enableCors();
   const port = process.env.PORT ?? 3000;
-  await app.listen(port);
-  console.log(`MT910 backend running on http://localhost:${port}`);
+  await app.listen(port, '0.0.0.0');
+  console.log(`MT910 backend running on http://0.0.0.0:${port}`);
 }
 bootstrap();

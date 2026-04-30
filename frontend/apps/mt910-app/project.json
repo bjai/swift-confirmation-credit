@@ -24,6 +24,12 @@
       },
       "configurations": {
         "production": {
+          "fileReplacements": [
+            {
+              "replace": "apps/mt910-app/src/environments/environment.ts",
+              "with": "apps/mt910-app/src/environments/environment.prod.ts"
+            }
+          ],
           "budgets": [
             { "type": "initial", "maximumWarning": "600kb", "maximumError": "2mb" },
             { "type": "anyComponentStyle", "maximumWarning": "4kb", "maximumError": "8kb" }

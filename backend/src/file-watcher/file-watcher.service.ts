@@ -56,7 +56,9 @@ export class FileWatcherService implements OnModuleInit {
         const filePath = path.join(this.inputDir, filename);
         setTimeout(() => {
           if (fs.existsSync(filePath)) {
-            this.processFile(filePath, filename);
+            this.processFile(filePath, filename).catch((err) =>
+              this.logger.error(`Unhandled error processing "${filename}": ${err?.message ?? err}`),
+            );
           }
         }, 500);
       }
@@ -69,37 +71,47 @@ export class FileWatcherService implements OnModuleInit {
       this.logger.log(`Processing ${files.length} existing file(s) in input folder`);
     }
     for (const file of files) {
-      this.processFile(path.join(this.inputDir, file), file);
+      this.processFile(path.join(this.inputDir, file), file).catch((err) =>
+        this.logger.error(`Unhandled error processing "${file}": ${err?.message ?? err}`),
+      );
     }
   }
 
-  private async processFile(filePath: string, fileName: string) {
+  private async processFile(filePath: string, fileName: string): Promise<void> {
     try {
       const raw = fs.readFileSync(filePath, 'utf-8');
 
       const validation = this.parser.validate(raw);
       if (!validation.valid) {
         this.logger.warn(`Rejected "${fileName}": ${validation.reason}`);
-        const dest = path.join(this.rejectedDir, fileName);
-        fs.renameSync(filePath, dest);
-        this.logger.warn(`Moved to rejected: ${dest}`);
+        this.safeMove(filePath, path.join(this.rejectedDir, fileName), 'rejected');
         return;
       }
 
       const saved = await this.mt910Service.saveFromRaw(raw, fileName);
       this.logger.log(`Processed: ${fileName} → DB id=${saved.id}`);
-      const dest = path.join(this.processedDir, fileName);
-      fs.renameSync(filePath, dest);
-      this.logger.log(`Moved to processed: ${dest}`);
+      this.safeMove(filePath, path.join(this.processedDir, fileName), 'processed');
     } catch (err) {
-      const isDuplicate = err.message?.includes('Duplicate entry') || err.message?.includes('already exists');
+      const errMsg: string = err?.response?.message ?? err?.message ?? String(err);
+      const isDuplicate = errMsg.includes('Duplicate entry') || errMsg.includes('already exists');
       if (isDuplicate) {
-        this.logger.warn(`Skipped duplicate "${fileName}": ${err.message}`);
+        this.logger.warn(`Skipped duplicate "${fileName}": ${errMsg}`);
       } else {
-        this.logger.error(`Failed to process "${fileName}": ${err.message}`);
+        this.logger.error(`Failed to process "${fileName}": ${errMsg}`);
       }
-      const dest = path.join(this.rejectedDir, fileName);
-      if (fs.existsSync(filePath)) fs.renameSync(filePath, dest);
+      this.safeMove(filePath, path.join(this.rejectedDir, fileName), 'rejected');
+    }
+  }
+
+  /** Move a file without throwing — logs on failure so the caller never crashes. */
+  private safeMove(src: string, dest: string, label: string): void {
+    try {
+      if (fs.existsSync(src)) {
+        fs.renameSync(src, dest);
+        this.logger.log(`Moved to ${label}: ${dest}`);
+      }
+    } catch (moveErr) {
+      this.logger.error(`Could not move "${src}" to ${label} folder: ${moveErr?.message ?? moveErr}`);
     }
   }
 
