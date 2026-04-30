@@ -8,7 +8,7 @@ npm install
 npm run build
 
 # Use pm2.cmd to avoid PowerShell execution policy blocking pm2.ps1
-$pm2 = "pm2.cmd"
+$pm2 = "C:\Users\Administrator\AppData\Roaming\npm\pm2.cmd"
 
 # Check if the process is already running
 $processExists = & $pm2 list 2>&1 | Select-String "nest-backend-api"
