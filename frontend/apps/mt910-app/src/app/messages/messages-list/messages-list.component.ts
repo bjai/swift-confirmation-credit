@@ -10,6 +10,7 @@ import { Mt910Service, Mt910Message, FiltersMeta } from '@swift-mt910/mt910';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './messages-list.component.html',
+  styleUrl: './messages-list.component.scss',
 })
 export class MessagesListComponent implements OnInit {
   messages: Mt910Message[] = [];
@@ -20,6 +21,9 @@ export class MessagesListComponent implements OnInit {
   uploading = false;
   uploadError = '';
   uploadSuccess = '';
+  deletingId: number | null = null;
+  showDeleteConfirm = false;
+  private deleteTargetId: number | null = null;
   filters = { search: '', currency: '', dateFrom: '', dateTo: '' };
   meta: FiltersMeta = { currencies: [], minDate: '', maxDate: '' };
 
@@ -185,6 +189,38 @@ export class MessagesListComponent implements OnInit {
       : str;
   }
 
+  deleteRow(id: number) {
+    this.deleteTargetId = id;
+    this.showDeleteConfirm = true;
+  }
+
+  cancelDelete() {
+    this.showDeleteConfirm = false;
+    this.deleteTargetId = null;
+  }
+
+  confirmDelete() {
+    if (this.deleteTargetId === null) return;
+    const id = this.deleteTargetId;
+    this.deletingId = id;
+    this.svc.deleteMessage(id).subscribe({
+      next: () => {
+        this.deletingId = null;
+        this.showDeleteConfirm = false;
+        this.deleteTargetId = null;
+        this.selectedIds.delete(id);
+        this.loadMeta();
+        this.loadMessages();
+      },
+      error: (err) => {
+        this.deletingId = null;
+        this.showDeleteConfirm = false;
+        this.deleteTargetId = null;
+        this.uploadError = err?.error?.message ?? 'Delete failed';
+      },
+    });
+  }
+
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (!input.files?.length) return;
@@ -199,7 +235,11 @@ export class MessagesListComponent implements OnInit {
         this.loadMessages();
         input.value = '';
       },
-      error: (err) => { this.uploading = false; this.uploadError = err?.error?.message ?? 'Upload failed'; },
+      error: (err) => {
+        this.uploading = false;
+        this.uploadError = err?.error?.message ?? 'Upload failed';
+        input.value = '';
+      },
     });
   }
 }

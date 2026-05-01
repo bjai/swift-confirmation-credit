@@ -18,6 +18,7 @@
         "assets": [{ "glob": "**/*", "input": "apps/mt910-app/src/assets", "output": "assets" }],
         "styles": [
           "node_modules/bootstrap/dist/css/bootstrap.min.css",
+          "node_modules/bootstrap-icons/font/bootstrap-icons.css",
           "apps/mt910-app/src/styles.scss"
         ],
         "scripts": []

@@ -1,21 +1,40 @@
 <div class="container py-4">
-  <div class="mb-3 d-flex align-items-center justify-content-between">
-    <button class="btn btn-outline-secondary btn-sm" (click)="goBack()">← Back to List</button>
-    <button *ngIf="message && !loading" class="btn btn-danger btn-sm" (click)="confirmDelete()" [disabled]="deleting">
-      <i class="bi bi-trash me-1"></i> Delete
-    </button>
+
+  <!-- ── Delete Confirmation Modal ───────────────────────────────────────── -->
+  <div *ngIf="showConfirm" class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:420px">
+      <div class="modal-content">
+        <div class="modal-header border-0 pb-0">
+          <div class="d-flex align-items-center gap-2">
+            <span class="d-flex align-items-center justify-content-center rounded-circle bg-danger bg-opacity-10"
+                  style="width:40px;height:40px">
+              <i class="bi bi-trash text-danger fs-5"></i>
+            </span>
+            <h5 class="modal-title fw-bold mb-0">Delete Record</h5>
+          </div>
+          <button type="button" class="btn-close" (click)="cancelDelete()" [disabled]="deleting"></button>
+        </div>
+        <div class="modal-body pt-2">
+          <p class="text-muted mb-0">Are you sure you want to permanently delete this MT910 record? This action cannot be undone.</p>
+        </div>
+        <div class="modal-footer border-0">
+          <button class="btn btn-outline-secondary btn-sm px-4" (click)="cancelDelete()" [disabled]="deleting">Cancel</button>
+          <button class="btn btn-danger btn-sm px-4" (click)="doDelete()" [disabled]="deleting">
+            <span *ngIf="deleting"><span class="spinner-border spinner-border-sm me-1"></span>Deleting...</span>
+            <span *ngIf="!deleting"><i class="bi bi-trash me-1"></i>Delete</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- Delete confirmation banner -->
-  <div *ngIf="showConfirm" class="alert alert-danger d-flex align-items-center justify-content-between mb-3">
-    <span><strong>Are you sure?</strong> This record will be permanently deleted.</span>
-    <div class="d-flex gap-2 ms-3">
-      <button class="btn btn-danger btn-sm" (click)="doDelete()" [disabled]="deleting">
-        <span *ngIf="deleting"><span class="spinner-border spinner-border-sm me-1"></span>Deleting...</span>
-        <span *ngIf="!deleting">Yes, Delete</span>
-      </button>
-      <button class="btn btn-outline-secondary btn-sm" (click)="cancelDelete()" [disabled]="deleting">Cancel</button>
-    </div>
+  <div class="mb-3 d-flex align-items-center justify-content-between">
+    <button class="btn btn-outline-secondary btn-sm" (click)="goBack()">
+      <i class="bi bi-arrow-left me-1"></i> Back to List
+    </button>
+    <button *ngIf="message && !loading" class="btn btn-outline-danger btn-sm" (click)="confirmDelete()" [disabled]="deleting">
+      <i class="bi bi-trash me-1"></i> Delete
+    </button>
   </div>
 
   <div *ngIf="loading" class="text-center py-5"><div class="spinner-border text-primary"></div></div>
@@ -82,8 +101,15 @@
     <div class="row g-3">
       <div class="col-md-4" *ngIf="message.senderToReceiverInfo">
         <div class="card shadow-sm">
-          <div class="card-header py-2 bg-light fw-semibold">:72: Sender to Receiver</div>
-          <div class="card-body"><pre class="mb-0 small">{{ message.senderToReceiverInfo }}</pre></div>
+          <div class="card-header py-2 bg-light fw-semibold d-flex align-items-center gap-2">
+            <i class="bi bi-chat-right-text text-muted"></i>
+            <span>:72: Sender to Receiver</span>
+          </div>
+          <div class="card-body">
+            <span style="display:inline-block; padding:.3rem .7rem; font-size:.88rem; font-weight:500;
+                         color:#856404; background:#fff9e6; border:1.5px solid #ffc107;
+                         border-radius:.4rem; line-height:1.5; white-space:pre-wrap; word-break:break-word">{{ message.senderToReceiverInfo }}</span>
+          </div>
         </div>
       </div>
       <div [class]="message.senderToReceiverInfo ? 'col-md-8' : 'col-md-12'">
