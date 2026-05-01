@@ -51,7 +51,7 @@ export class Mt910Service {
 
     if (search) {
       qb.andWhere(
-        '(m.senderReference LIKE :s OR m.relatedReference LIKE :s OR m.orderingCustomer LIKE :s OR m.accountIdentification LIKE :s)',
+        '(m.senderReference ILIKE :s OR m.relatedReference ILIKE :s OR m.orderingCustomer ILIKE :s OR m.accountIdentification ILIKE :s)',
         { s: `%${search}%` },
       );
     }

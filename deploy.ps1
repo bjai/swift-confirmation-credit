@@ -51,10 +51,31 @@ $webConfig = @'
   <system.webServer>
     <rewrite>
       <rules>
+        <!-- Swift Flask API on port 8000, exposed as /swift/* -->
+        <rule name="Swift API Proxy" stopProcessing="true">
+          <match url="^swift/(.*)" />
+          <action type="Rewrite" url="http://127.0.0.1:8000/{R:1}" />
+        </rule>
+
+        <!-- Flasgger static JS/CSS assets (absolute path, no /swift/ prefix) -->
+        <rule name="Flasgger Static Proxy" stopProcessing="true">
+          <match url="^flasgger_static/(.*)" />
+          <action type="Rewrite" url="http://127.0.0.1:8000/flasgger_static/{R:1}" />
+        </rule>
+
+        <!-- Flasgger API spec JSON -->
+        <rule name="Flasgger Spec Proxy" stopProcessing="true">
+          <match url="^apispec_1.json" />
+          <action type="Rewrite" url="http://127.0.0.1:8000/apispec_1.json" />
+        </rule>
+
+        <!-- Existing backend API on port 3000 -->
         <rule name="API Proxy" stopProcessing="true">
           <match url="^api/(.*)" />
-          <action type="Rewrite" url="http://localhost:3000/api/{R:1}" />
+          <action type="Rewrite" url="http://127.0.0.1:3000/api/{R:1}" />
         </rule>
+
+        <!-- Existing Angular SPA -->
         <rule name="Angular SPA" stopProcessing="true">
           <match url=".*" />
           <conditions logicalGrouping="MatchAll">
@@ -65,6 +86,7 @@ $webConfig = @'
         </rule>
       </rules>
     </rewrite>
+
     <staticContent>
       <remove fileExtension=".json" />
       <mimeMap fileExtension=".json" mimeType="application/json" />

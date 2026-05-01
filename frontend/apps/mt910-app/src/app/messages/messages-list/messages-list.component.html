@@ -165,7 +165,7 @@
             <th style="width:75px">Currency</th>
             <th class="text-end" style="width:110px">Amount</th>
             <th style="width:260px">Ordering Customer</th>
-            <th style="min-width:300px">Sender to Receiver Info</th>
+            <th>Sender to Receiver Info</th>
             <th style="width:90px">Actions</th>
           </tr>
         </thead>
@@ -193,7 +193,7 @@
             <td><span class="badge bg-primary">{{ msg.currency }}</span></td>
             <td class="text-end fw-semibold">{{ msg.amount | number:'1.2-2' }}</td>
             <td class="text-truncate" style="max-width:260px" [title]="msg.orderingCustomer">{{ msg.orderingCustomer }}</td>
-            <td style="min-width:300px; padding-right:2.5rem">
+            <td>
               <ng-container *ngIf="msg.senderToReceiverInfo; else noInfo">
                 <span class="receiver-info-badge" [title]="msg.senderToReceiverInfo">
                   {{ msg.senderToReceiverInfo }}
@@ -202,7 +202,7 @@
               <ng-template #noInfo><span class="text-muted fst-italic small">—</span></ng-template>
             </td>
             <td style="width:90px">
-              <div class="d-flex align-items-center gap-1">
+              <div class="d-flex align-items-center gap-2">
                 <a [routerLink]="['/messages', msg.id]" class="btn btn-outline-info btn-sm px-2" title="View details">
                   <i class="bi bi-eye"></i>
                 </a>
