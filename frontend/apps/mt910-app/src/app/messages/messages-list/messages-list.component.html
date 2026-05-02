@@ -1,7 +1,7 @@
 <div class="mt910-page">
 
   <!-- ── Page Header ─────────────────────────────────────────────────────── -->
-  <div class="page-header d-flex align-items-center justify-content-between px-4 py-3 mb-4">
+  <div class="page-header d-flex align-items-center justify-content-between py-3 mb-3">
     <div>
       <h4 class="mb-0 fw-bold text-white">MT910 — Confirmation of Credit</h4>
       <small class="text-white-50">SWIFT incoming credit confirmations</small>
@@ -91,7 +91,7 @@
   </div>
 
   <!-- ── Alerts ──────────────────────────────────────────────────────────── -->
-  <div class="px-4">
+  <div class="section-shell">
     <div *ngIf="uploadSuccess" class="alert alert-success alert-dismissible d-flex align-items-center py-2 mb-3">
       <i class="bi bi-check-circle me-2"></i>
       <span class="flex-grow-1">{{ uploadSuccess }}</span>
@@ -105,29 +105,29 @@
   </div>
 
   <!-- ── Filter Bar ──────────────────────────────────────────────────────── -->
-  <div class="filter-bar mx-4 mb-3 px-3 py-3 bg-white rounded shadow-sm">
+  <div class="filter-bar section-shell mb-3 px-3 py-3 bg-white rounded shadow-sm">
     <div class="row g-2 align-items-end">
-      <div class="col-md-4">
+      <div class="col-12 col-lg-4">
         <label class="filter-label">Search</label>
         <input type="text" class="form-control form-control-sm" placeholder="Reference, customer, account..."
           [value]="filters.search" (input)="onSearchChange($any($event.target).value)">
       </div>
-      <div class="col-md-2">
+      <div class="col-6 col-lg-2">
         <label class="filter-label">Currency</label>
         <select class="form-select form-select-sm" [(ngModel)]="filters.currency" (change)="onFilterChange()">
           <option value="">All</option>
           <option *ngFor="let c of meta.currencies" [value]="c">{{ c }}</option>
         </select>
       </div>
-      <div class="col-md-2">
+      <div class="col-6 col-lg-2">
         <label class="filter-label">Date From</label>
         <input type="date" class="form-control form-control-sm" [(ngModel)]="filters.dateFrom" (change)="onFilterChange()">
       </div>
-      <div class="col-md-2">
+      <div class="col-6 col-lg-2">
         <label class="filter-label">Date To</label>
         <input type="date" class="form-control form-control-sm" [(ngModel)]="filters.dateTo" (change)="onFilterChange()">
       </div>
-      <div class="col-md-2">
+      <div class="col-6 col-lg-2">
         <button class="btn btn-outline-secondary btn-sm w-100" (click)="clearFilters()">
           <i class="bi bi-x-circle me-1"></i> Clear
         </button>
@@ -136,7 +136,7 @@
   </div>
 
   <!-- ── Data Table ──────────────────────────────────────────────────────── -->
-  <div class="mx-4 bg-white rounded shadow-sm overflow-hidden">
+  <div class="section-shell bg-white rounded shadow-sm overflow-hidden">
 
     <!-- Table meta row -->
     <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom">
@@ -159,13 +159,13 @@
             </th>
             <th style="width:40px">#</th>
             <th style="width:160px">Sender Ref</th>
-            <th style="width:120px">Related Ref</th>
-            <th style="width:120px">Account</th>
-            <th style="width:100px">Value Date</th>
+            <th class="d-none d-xl-table-cell" style="width:110px">Related Ref</th>
+            <th class="d-none d-xl-table-cell" style="width:110px">Account</th>
+            <th class="d-none d-lg-table-cell" style="width:96px">Value Date</th>
             <th style="width:75px">Currency</th>
             <th class="text-end" style="width:110px">Amount</th>
-            <th style="width:260px">Ordering Customer</th>
-            <th>Sender to Receiver Info</th>
+            <th style="width:320px">Ordering Customer</th>
+            <th style="width:220px">Sender to Receiver Info</th>
             <th style="width:90px">Actions</th>
           </tr>
         </thead>
@@ -185,15 +185,15 @@
             <td style="width:160px" [title]="msg.senderReference">
               <span class="sender-ref-link">{{ msg.senderReference }}</span>
             </td>
-            <td class="text-truncate" style="max-width:120px" [title]="msg.relatedReference">
+            <td class="text-truncate d-none d-xl-table-cell" style="max-width:110px" [title]="msg.relatedReference">
               <code class="text-secondary" style="font-size:.82rem">{{ msg.relatedReference }}</code>
             </td>
-            <td class="text-truncate" style="max-width:120px" [title]="msg.accountIdentification">{{ msg.accountIdentification }}</td>
-            <td>{{ msg.valueDate }}</td>
+            <td class="text-truncate d-none d-xl-table-cell" style="max-width:110px" [title]="msg.accountIdentification">{{ msg.accountIdentification }}</td>
+            <td class="d-none d-lg-table-cell">{{ msg.valueDate }}</td>
             <td><span class="badge bg-primary">{{ msg.currency }}</span></td>
             <td class="text-end fw-semibold">{{ msg.amount | number:'1.2-2' }}</td>
-            <td class="text-truncate" style="max-width:260px" [title]="msg.orderingCustomer">{{ msg.orderingCustomer }}</td>
-            <td>
+            <td class="text-truncate" style="max-width:320px" [title]="msg.orderingCustomer">{{ msg.orderingCustomer }}</td>
+            <td class="sender-info-cell" style="max-width:220px">
               <ng-container *ngIf="msg.senderToReceiverInfo; else noInfo">
                 <span class="receiver-info-badge" [title]="msg.senderToReceiverInfo">
                   {{ msg.senderToReceiverInfo }}
