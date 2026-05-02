@@ -81,7 +81,7 @@
       <div class="col-md-4">
         <div class="card shadow-sm h-100">
           <div class="card-header py-2 bg-light fw-semibold">:50: Ordering Customer</div>
-          <div class="card-body"><pre class="mb-0 small">{{ message.orderingCustomer || '—' }}</pre></div>
+          <div class="card-body"><pre class="mb-0 small">{{ (message.orderingCustomer?.startsWith('/') ? message.orderingCustomer.slice(1) : message.orderingCustomer) || '—' }}</pre></div>
         </div>
       </div>
       <div class="col-md-4">
@@ -108,7 +108,7 @@
           <div class="card-body">
             <span style="display:inline-block; padding:.3rem .7rem; font-size:.88rem; font-weight:500;
                          color:#856404; background:#fff9e6; border:1.5px solid #ffc107;
-                         border-radius:.4rem; line-height:1.5; white-space:pre-wrap; word-break:break-word">{{ message.senderToReceiverInfo }}</span>
+                         border-radius:.4rem; line-height:1.5; white-space:pre-wrap; word-break:break-word">{{ message.senderToReceiverInfo?.startsWith('/') ? message.senderToReceiverInfo.slice(1) : message.senderToReceiverInfo }}</span>
           </div>
         </div>
       </div>

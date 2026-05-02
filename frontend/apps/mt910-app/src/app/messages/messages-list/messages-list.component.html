@@ -192,11 +192,11 @@
             <td class="d-none d-lg-table-cell">{{ msg.valueDate }}</td>
             <td><span class="badge bg-primary">{{ msg.currency }}</span></td>
             <td class="text-end fw-semibold">{{ msg.amount | number:'1.2-2' }}</td>
-            <td class="text-truncate" style="max-width:320px" [title]="msg.orderingCustomer">{{ msg.orderingCustomer }}</td>
+            <td class="text-truncate" style="max-width:320px" [title]="msg.orderingCustomer">{{ msg.orderingCustomer?.startsWith('/') ? msg.orderingCustomer.slice(1) : msg.orderingCustomer }}</td>
             <td class="sender-info-cell" style="max-width:220px">
               <ng-container *ngIf="msg.senderToReceiverInfo; else noInfo">
                 <span class="receiver-info-badge" [title]="msg.senderToReceiverInfo">
-                  {{ msg.senderToReceiverInfo }}
+                  {{ msg.senderToReceiverInfo?.startsWith('/') ? msg.senderToReceiverInfo.slice(1) : msg.senderToReceiverInfo }}
                 </span>
               </ng-container>
               <ng-template #noInfo><span class="text-muted fst-italic small">—</span></ng-template>
