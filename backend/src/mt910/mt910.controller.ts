@@ -15,6 +15,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Mt910Service } from './mt910.service';
+import type { CategorySummary } from './mt910.service';
 import { AppSettingsService } from './app-settings.service';
 import { QueryMt910Dto } from './dto/query-mt910.dto';
 
@@ -39,6 +40,36 @@ export class Mt910Controller {
   @Get('messages')
   findAll(@Query() query: QueryMt910Dto) {
     return this.service.findAll(query);
+  }
+
+  /** GET /api/mt910/messages/category-summary */
+  @Get('messages/category-summary')
+  categorySummary(): Promise<CategorySummary[]> {
+    return this.service.categorySummary();
+  }
+
+  /** GET /api/mt910/messages/qualifier-summary */
+  @Get('messages/qualifier-summary')
+  qualifierSummary() {
+    return this.service.qualifierSummary();
+  }
+
+  /** POST /api/mt910/messages/reclassify-72 */
+  @Post('messages/reclassify-72')
+  reclassify72() {
+    return this.service.reclassifySenderToReceiverInfo();
+  }
+
+  /** DELETE /api/mt910/messages/delete-all (with confirmation body) */
+  @Delete('messages/delete-all')
+  @HttpCode(HttpStatus.OK)
+  deleteAllMessages(@Body() body: { confirm: string }) {
+    if (body?.confirm !== 'DELETE_ALL') {
+      throw new BadRequestException(
+        'Confirmation required. Send { "confirm": "DELETE_ALL" } to delete all messages.',
+      );
+    }
+    return this.service.deleteAllMessages();
   }
 
   /** GET /api/mt910/messages/:id */

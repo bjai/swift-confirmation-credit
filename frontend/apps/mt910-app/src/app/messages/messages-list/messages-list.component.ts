@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import { Mt910Service, Mt910Message, FiltersMeta } from '@swift-mt910/mt910';
 
@@ -24,8 +24,8 @@ export class MessagesListComponent implements OnInit {
   deletingId: number | null = null;
   showDeleteConfirm = false;
   private deleteTargetId: number | null = null;
-  filters = { search: '', currency: '', dateFrom: '', dateTo: '' };
-  meta: FiltersMeta = { currencies: [], minDate: '', maxDate: '' };
+  filters = { search: '', currency: '', senderToReceiverQualifier: '', senderToReceiverCategory: '', dateFrom: '', dateTo: '' };
+  meta: FiltersMeta = { currencies: [], qualifiers: [], categories: [], minDate: '', maxDate: '' };
 
   selectedIds = new Set<number>();
 
@@ -71,9 +71,17 @@ export class MessagesListComponent implements OnInit {
 
   private searchSubject = new Subject<string>();
 
-  constructor(private svc: Mt910Service) {}
+  constructor(private svc: Mt910Service, private route: ActivatedRoute) {}
 
   ngOnInit(): void {
+    // Pre-fill filters from query params (e.g. navigation from Dashboard)
+    const qp = this.route.snapshot.queryParamMap;
+    if (qp.get('senderToReceiverCategory')) {
+      this.filters.senderToReceiverCategory = qp.get('senderToReceiverCategory')!;
+    }
+    if (qp.get('senderToReceiverQualifier')) {
+      this.filters.senderToReceiverQualifier = qp.get('senderToReceiverQualifier')!;
+    }
     this.loadMeta();
     this.loadMessages();
     this.searchSubject.pipe(debounceTime(400), distinctUntilChanged()).subscribe(() => {
@@ -101,7 +109,7 @@ export class MessagesListComponent implements OnInit {
 
   onSearchChange(value: string) { this.filters.search = value; this.searchSubject.next(value); }
   onFilterChange() { this.page = 1; this.loadMessages(); }
-  clearFilters() { this.filters = { search: '', currency: '', dateFrom: '', dateTo: '' }; this.page = 1; this.loadMessages(); }
+  clearFilters() { this.filters = { search: '', currency: '', senderToReceiverQualifier: '', senderToReceiverCategory: '', dateFrom: '', dateTo: '' }; this.page = 1; this.loadMessages(); }
   onPageChange(p: number) { this.page = p; this.loadMessages(); }
 
   get totalPages(): number { return Math.ceil(this.total / this.limit); }

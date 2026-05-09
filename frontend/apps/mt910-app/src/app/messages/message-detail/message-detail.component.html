@@ -106,6 +106,9 @@
             <span>:72: Sender to Receiver</span>
           </div>
           <div class="card-body">
+            <div class="mb-2" *ngIf="message.senderToReceiverCategoryLabel">
+              <span class="badge bg-info text-dark">{{ message.senderToReceiverCategoryLabel }}</span>
+            </div>
             <span style="display:inline-block; padding:.3rem .7rem; font-size:.88rem; font-weight:500;
                          color:#856404; background:#fff9e6; border:1.5px solid #ffc107;
                          border-radius:.4rem; line-height:1.5; white-space:pre-wrap; word-break:break-word">{{ message.senderToReceiverInfo?.startsWith('/') ? message.senderToReceiverInfo.slice(1) : message.senderToReceiverInfo }}</span>

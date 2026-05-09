@@ -12,6 +12,14 @@ export class QueryMt910Dto {
 
   @IsOptional()
   @IsString()
+  senderToReceiverCategory?: string;
+
+  @IsOptional()
+  @IsString()
+  senderToReceiverQualifier?: string;
+
+  @IsOptional()
+  @IsString()
   dateFrom?: string;
 
   @IsOptional()

@@ -2,8 +2,14 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Mt910Message } from './entities/mt910-message.entity';
-import { Mt910ParserService, ParsedMt910 } from './mt910-parser.service';
+import { Mt910ParserService, ParsedMt910, SenderToReceiverCategory } from './mt910-parser.service';
 import { QueryMt910Dto } from './dto/query-mt910.dto';
+
+export interface CategorySummary {
+  key: string;
+  label: string;
+  count: number;
+}
 
 @Injectable()
 export class Mt910Service {
@@ -46,7 +52,7 @@ export class Mt910Service {
   }
 
   async findAll(query: QueryMt910Dto): Promise<{ data: Mt910Message[]; total: number; page: number; limit: number }> {
-    const { search, currency, dateFrom, dateTo, page = 1, limit = 20 } = query;
+    const { search, currency, senderToReceiverCategory, senderToReceiverQualifier, dateFrom, dateTo, page = 1, limit = 20 } = query;
     const qb = this.repo.createQueryBuilder('m');
 
     if (search) {
@@ -57,6 +63,18 @@ export class Mt910Service {
     }
     if (currency) {
       qb.andWhere('m.currency = :currency', { currency });
+    }
+    if (senderToReceiverCategory) {
+      if (senderToReceiverCategory === 'uncategorized') {
+        qb.andWhere('(m.senderToReceiverCategory IS NULL OR m.senderToReceiverCategory = :uncategorizedKey)', {
+          uncategorizedKey: 'uncategorized',
+        });
+      } else {
+        qb.andWhere('m.senderToReceiverCategory = :senderToReceiverCategory', { senderToReceiverCategory });
+      }
+    }
+    if (senderToReceiverQualifier) {
+      qb.andWhere('m.senderToReceiverQualifier = :senderToReceiverQualifier', { senderToReceiverQualifier });
     }
     if (dateFrom) {
       qb.andWhere('m.valueDate >= :dateFrom', { dateFrom });
@@ -83,7 +101,7 @@ export class Mt910Service {
     await this.repo.delete(id);
   }
 
-  async filtersMeta(): Promise<{ currencies: string[]; minDate: string; maxDate: string }> {
+  async filtersMeta(): Promise<{ currencies: string[]; qualifiers: string[]; categories: Array<{ key: string; label: string }>; minDate: string; maxDate: string }> {
     const currencies = await this.repo
       .createQueryBuilder('m')
       .select('DISTINCT m.currency', 'currency')
@@ -97,10 +115,114 @@ export class Mt910Service {
       .addSelect('MAX(m.valueDate)', 'maxDate')
       .getRawOne();
 
+    let categories: Array<{ key: string; label: string }> = [];
+    let qualifiers: string[] = [];
+
+    try {
+      categories = await this.repo
+        .createQueryBuilder('m')
+        .select('m.senderToReceiverCategory', 'key')
+        .addSelect('m.senderToReceiverCategoryLabel', 'label')
+        .where('m.senderToReceiverCategory IS NOT NULL')
+        .groupBy('m.senderToReceiverCategory')
+        .addGroupBy('m.senderToReceiverCategoryLabel')
+        .orderBy('m.senderToReceiverCategoryLabel', 'ASC')
+        .getRawMany()
+        .then((rows) => rows.filter((r) => r.key && r.label));
+
+      qualifiers = await this.repo
+        .createQueryBuilder('m')
+        .select('m.senderToReceiverQualifier', 'qualifier')
+        .where('m.senderToReceiverQualifier IS NOT NULL')
+        .groupBy('m.senderToReceiverQualifier')
+        .orderBy('m.senderToReceiverQualifier', 'ASC')
+        .getRawMany()
+        .then((rows) => rows.map((r) => r.qualifier).filter(Boolean));
+    } catch {
+      // Fallback for environments where new columns are not available yet.
+      categories = [];
+      qualifiers = [];
+    }
+
     return {
       currencies,
+      qualifiers,
+      categories,
       minDate: minMax?.minDate ?? null,
       maxDate: minMax?.maxDate ?? null,
+    };
+  }
+
+  async categorySummary(): Promise<CategorySummary[]> {
+    try {
+      const rows = await this.repo
+        .createQueryBuilder('m')
+        .select('COALESCE(m.senderToReceiverCategory, \'uncategorized\')', 'key')
+        .addSelect('COALESCE(m.senderToReceiverCategoryLabel, \'Other\')', 'label')
+        .addSelect('COUNT(1)', 'count')
+        .groupBy("COALESCE(m.senderToReceiverCategory, 'uncategorized')")
+        .addGroupBy("COALESCE(m.senderToReceiverCategoryLabel, 'Other')")
+        .orderBy('COUNT(1)', 'DESC')
+        .getRawMany();
+      return rows.map((r) => ({ key: r.key, label: r.label, count: Number(r.count) }));
+    } catch {
+      return [];
+    }
+  }
+
+  async qualifierSummary(): Promise<Array<{ qualifier: string; count: number }>> {
+    try {
+      const rows = await this.repo
+        .createQueryBuilder('m')
+        .select('m.senderToReceiverQualifier', 'qualifier')
+        .addSelect('COUNT(1)', 'count')
+        .where('m.senderToReceiverQualifier IS NOT NULL')
+        .groupBy('m.senderToReceiverQualifier')
+        .orderBy('COUNT(1)', 'DESC')
+        .getRawMany();
+      return rows.map((r) => ({ qualifier: r.qualifier, count: Number(r.count) }));
+    } catch {
+      return [];
+    }
+  }
+
+  async reclassifySenderToReceiverInfo(): Promise<{ updated: number }> {
+    const messages = await this.repo.find();
+    let updated = 0;
+
+    for (const msg of messages) {
+      const next: SenderToReceiverCategory = this.parser.classifySenderToReceiverInfo(msg.senderToReceiverInfo);
+      const nextQualifier = this.parser.extractSenderToReceiverQualifier(msg.senderToReceiverInfo);
+      if (
+        msg.senderToReceiverQualifier !== nextQualifier ||
+        msg.senderToReceiverCategory !== next.key ||
+        msg.senderToReceiverCategoryLabel !== next.label
+      ) {
+        msg.senderToReceiverQualifier = nextQualifier;
+        msg.senderToReceiverCategory = next.key;
+        msg.senderToReceiverCategoryLabel = next.label;
+        await this.repo.save(msg);
+        updated += 1;
+      }
+    }
+
+    return { updated };
+  }
+
+  async deleteAllMessages(): Promise<{ deleted: number; message: string }> {
+    const countBefore = await this.repo.count();
+
+    // Delete all records
+    await this.repo.delete({});
+
+    // Reset the sequence (auto-increment)
+    await this.repo.query(
+      'ALTER SEQUENCE mt910_messages_id_seq RESTART WITH 1',
+    );
+
+    return {
+      deleted: countBefore,
+      message: `Successfully deleted ${countBefore} message(s) and reset the database sequence.`,
     };
   }
 }

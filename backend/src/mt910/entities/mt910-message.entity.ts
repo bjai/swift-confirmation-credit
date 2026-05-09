@@ -52,6 +52,18 @@ export class Mt910Message {
   @Column({ type: 'text', nullable: true })
   senderToReceiverInfo: string;
 
+  /** :72: SWIFT qualifier, e.g. REC in /REC/... */
+  @Column({ nullable: true })
+  senderToReceiverQualifier: string;
+
+  /** Derived from :72: for meaningful grouping */
+  @Column({ nullable: true })
+  senderToReceiverCategory: string;
+
+  /** Human-friendly category label derived from :72: */
+  @Column({ nullable: true })
+  senderToReceiverCategoryLabel: string;
+
   /** Original file name */
   @Column()
   fileName: string;

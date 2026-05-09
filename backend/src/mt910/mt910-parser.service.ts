@@ -11,6 +11,14 @@ export interface ParsedMt910 {
   orderingInstitution?: string;
   intermediary?: string;
   senderToReceiverInfo?: string;
+  senderToReceiverQualifier?: string;
+  senderToReceiverCategory?: string;
+  senderToReceiverCategoryLabel?: string;
+}
+
+export interface SenderToReceiverCategory {
+  key: string;
+  label: string;
 }
 
 export interface ValidationResult {
@@ -95,6 +103,10 @@ export class Mt910ParserService {
           break;
         case '72':
           result.senderToReceiverInfo = value;
+          result.senderToReceiverQualifier = this.extractSenderToReceiverQualifier(value);
+          const category = this.classifySenderToReceiverInfo(value);
+          result.senderToReceiverCategory = category.key;
+          result.senderToReceiverCategoryLabel = category.label;
           break;
       }
     }
@@ -116,5 +128,74 @@ export class Mt910ParserService {
     result.valueDate = `${fullYear}-${mm}-${dd}`;
     result.currency = currency;
     result.amount = parseFloat(amountStr.replace(',', '.'));
+  }
+
+  classifySenderToReceiverInfo(raw: string | null | undefined): SenderToReceiverCategory {
+    const normalized = this.normalizeSenderToReceiverText(raw);
+    if (!normalized) {
+      return { key: 'uncategorized', label: 'Other' };
+    }
+
+    const label = this.buildDynamicCategoryLabel(normalized);
+    if (!label) {
+      return { key: 'other', label: 'Other' };
+    }
+
+    return { key: this.toCategoryKey(label), label };
+  }
+
+  private normalizeSenderToReceiverText(raw: string | null | undefined): string {
+    if (!raw) return '';
+
+    return raw
+      .replace(/\r\n/g, ' ')
+      .replace(/\r/g, ' ')
+      .replace(/\n/g, ' ')
+      .replace(/^\/[A-Z]{3}\//, '') // strips SWIFT qualifier like /REC/
+      .replace(/^\/+/, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  extractSenderToReceiverQualifier(raw: string | null | undefined): string {
+    if (!raw) return null;
+    const m = raw.trim().match(/^\/([A-Z0-9]{3})\//);
+    return m ? m[1] : null;
+  }
+
+  private buildDynamicCategoryLabel(normalized: string): string {
+    // Remove common reference-like tokens so category comes from meaning text.
+    const withoutRefs = normalized
+      .replace(/\b(?:INV|REF|TRN|PO|DOC)[-\s]?[A-Z0-9-]*\d+[A-Z0-9-]*\b/gi, ' ')
+      .replace(/\b\d+\b/g, ' ')
+      .replace(/[_/]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    const firstSegment = (withoutRefs || normalized).split(/[;,.]/)[0].trim();
+    if (!firstSegment) return '';
+
+    const words = firstSegment.split(/\s+/).filter(Boolean).slice(0, 4);
+    if (!words.length) return '';
+
+    return this.toDisplayLabel(words.join(' '));
+  }
+
+  private toCategoryKey(label: string): string {
+    return label
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '') || 'other';
+  }
+
+  private toDisplayLabel(text: string): string {
+    const lowerWords = new Set(['for', 'of', 'and', 'to', 'in', 'on']);
+    const words = text.toLowerCase().split(/\s+/).filter(Boolean);
+    return words
+      .map((w, i) => {
+        if (i > 0 && lowerWords.has(w)) return w;
+        return w.charAt(0).toUpperCase() + w.slice(1);
+      })
+      .join(' ');
   }
 }

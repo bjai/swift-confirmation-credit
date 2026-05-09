@@ -1,0 +1,105 @@
+<div class="dash-page">
+
+  <!-- Header ──────────────────────────────────────────────────────────── -->
+  <div class="dash-header">
+    <div class="header-content">
+      <div class="header-left">
+        <h1 class="header-title">Dashboard</h1>
+        <p class="header-subtitle">SWIFT MT910 Credit Confirmation Overview</p>
+      </div>
+      <div class="header-right">
+        <button class="btn-export" (click)="exportCsv()" title="Export Summary to CSV">
+          <i class="bi bi-download me-2"></i>Export
+        </button>
+      </div>
+    </div>
+    <div class="header-stats">
+      <div class="stat-badge">
+        <span class="badge-icon"><i class="bi bi-envelope-check"></i></span>
+        <div class="badge-content">
+          <div class="badge-label">Total Messages</div>
+          <div class="badge-value">{{ totalMessages }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Spinner ──────────────────────────────────────────────────────────── -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner-border text-primary"></div>
+    <p class="text-muted mt-3">Loading dashboard data...</p>
+  </div>
+
+  <ng-container *ngIf="!loading">
+
+    <!-- Empty State ──────────────────────────────────────────────────────── -->
+    <div *ngIf="categoryRows.length === 0 && qualifierRows.length === 0"
+         class="empty-state">
+      <div class="empty-icon"><i class="bi bi-inbox"></i></div>
+      <h5>No Data Yet</h5>
+      <p>Upload some MT910 files to see groupings here.</p>
+    </div>
+
+    <!-- Sections ─────────────────────────────────────────────────────────── -->
+    <ng-container *ngIf="categoryRows.length > 0 || qualifierRows.length > 0">
+
+      <!-- By Qualifier Section -->
+      <div class="dashboard-section" *ngIf="qualifierRows.length > 0">
+        <div class="section-header">
+          <div class="section-title">
+            <i class="bi bi-tag-fill"></i>
+            <span>By :72: Qualifier</span>
+          </div>
+          <span class="section-count">{{ qualifierRows.length }} types</span>
+        </div>
+        <div class="cards-grid">
+          <div *ngFor="let q of qualifierRows"
+               class="metric-card qualifier-card"
+               [class.card-disabled]="q.qualifier === '—'"
+               (click)="goToQualifier(q.qualifier)">
+            <div class="card-header">
+              <div class="card-icon qualifier-icon"><i class="bi bi-arrow-left-right"></i></div>
+              <div class="card-action" *ngIf="q.qualifier !== '—'"><i class="bi bi-chevron-right"></i></div>
+            </div>
+            <div class="card-body">
+              <div class="card-value">{{ q.count }}</div>
+              <div class="card-label">{{ q.qualifier }}</div>
+            </div>
+            <div class="card-footer">{{ q.qualifier === '—' ? 'No Qualifier' : 'View Details' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- By Category Section -->
+      <div class="dashboard-section" *ngIf="categoryRows.length > 0">
+        <div class="section-header">
+          <div class="section-title">
+            <i class="bi bi-folder2-open"></i>
+            <span>By :72: Category</span>
+          </div>
+          <span class="section-count">{{ categoryRows.length }} categories</span>
+        </div>
+        <div class="cards-grid">
+          <div *ngFor="let c of categoryRows"
+               class="metric-card category-card"
+               (click)="goToCategory(c.key)">
+            <div class="card-header">
+              <div class="card-icon" [ngClass]="getCategoryIconClass(c.key)">
+                <i class="bi" [ngClass]="categoryIcon(c.key)"></i>
+              </div>
+              <div class="card-action"><i class="bi bi-chevron-right"></i></div>
+            </div>
+            <div class="card-body">
+              <div class="card-value">{{ c.count }}</div>
+              <div class="card-label">{{ c.label }}</div>
+            </div>
+            <div class="card-footer">View Messages</div>
+          </div>
+        </div>
+      </div>
+
+    </ng-container>
+
+  </ng-container>
+
+</div>

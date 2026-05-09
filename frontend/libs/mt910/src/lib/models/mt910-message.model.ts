@@ -10,10 +10,23 @@ export interface Mt910Message {
   orderingInstitution: string;
   intermediary: string;
   senderToReceiverInfo: string;
+  senderToReceiverQualifier: string;
+  senderToReceiverCategory: string;
+  senderToReceiverCategoryLabel: string;
   fileName: string;
   rawContent: string;
   processedAt: string;
   createdAt: string;
+}
+
+export interface QualifierSummary {
+  qualifier: string;
+  count: number;
+}
+
+export interface SenderToReceiverCategoryOption {
+  key: string;
+  label: string;
 }
 
 export interface MessageListResponse {
@@ -25,6 +38,8 @@ export interface MessageListResponse {
 
 export interface FiltersMeta {
   currencies: string[];
+  qualifiers: string[];
+  categories: SenderToReceiverCategoryOption[];
   minDate: string;
   maxDate: string;
 }

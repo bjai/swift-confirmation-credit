@@ -1,23 +1,41 @@
 <div class="mt910-page">
 
   <!-- ── Page Header ─────────────────────────────────────────────────────── -->
-  <div class="page-header d-flex align-items-center justify-content-between py-3 mb-3">
-    <div>
-      <h4 class="mb-0 fw-bold text-white">MT910 — Confirmation of Credit</h4>
-      <small class="text-white-50">SWIFT incoming credit confirmations</small>
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-left">
+        <h1 class="header-title">Confirmation of Credit</h1>
+        <p class="header-subtitle">MT910 SWIFT incoming credit confirmations</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn-header" (click)="openSettings()" title="Folder Settings">
+          <i class="bi bi-gear me-2"></i>Configuration
+        </button>
+        <label class="btn-header btn-upload" [class.disabled]="uploading">
+          <span *ngIf="!uploading"><i class="bi bi-upload me-2"></i>Upload</span>
+          <span *ngIf="uploading"><span class="spinner-border spinner-border-sm me-2"></span>Uploading...</span>
+          <input type="file" accept=".txt" class="d-none" (change)="onFileSelected($event)" [disabled]="uploading">
+        </label>
+        <button class="btn-header btn-export" [disabled]="!someSelected" (click)="exportCsv()">
+          <i class="bi bi-download me-2"></i>Export CSV
+        </button>
+      </div>
     </div>
-    <div class="d-flex gap-2">
-      <button class="btn btn-outline-light btn-sm" (click)="openSettings()" title="Folder Settings">
-        <i class="bi bi-gear me-1"></i> Configuration
-      </button>
-      <label class="btn btn-info btn-sm text-white" [class.disabled]="uploading">
-        <span *ngIf="!uploading"><i class="bi bi-upload me-1"></i> Upload File</span>
-        <span *ngIf="uploading"><span class="spinner-border spinner-border-sm me-1"></span> Uploading...</span>
-        <input type="file" accept=".txt" class="d-none" (change)="onFileSelected($event)" [disabled]="uploading">
-      </label>
-      <button class="btn btn-success btn-sm" [disabled]="!someSelected" (click)="exportCsv()">
-        <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export CSV
-      </button>
+    <div class="header-stats">
+      <div class="stat-item">
+        <span class="stat-icon"><i class="bi bi-file-earmark-text"></i></span>
+        <div class="stat-details">
+          <span class="stat-label">Total Records</span>
+          <span class="stat-value">{{ total }}</span>
+        </div>
+      </div>
+      <div class="stat-item" *ngIf="someSelected">
+        <span class="stat-icon selected"><i class="bi bi-check-circle-fill"></i></span>
+        <div class="stat-details">
+          <span class="stat-label">Selected</span>
+          <span class="stat-value">{{ selectedIds.size }}</span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -107,27 +125,41 @@
   <!-- ── Filter Bar ──────────────────────────────────────────────────────── -->
   <div class="filter-bar section-shell mb-3 px-3 py-3 bg-white rounded shadow-sm">
     <div class="row g-2 align-items-end">
-      <div class="col-12 col-lg-4">
+      <div class="col-12 col-xl-3 col-lg-4">
         <label class="filter-label">Search</label>
         <input type="text" class="form-control form-control-sm" placeholder="Reference, customer, account..."
           [value]="filters.search" (input)="onSearchChange($any($event.target).value)">
       </div>
-      <div class="col-6 col-lg-2">
+      <div class="col-6 col-xl-2 col-lg-4">
         <label class="filter-label">Currency</label>
         <select class="form-select form-select-sm" [(ngModel)]="filters.currency" (change)="onFilterChange()">
           <option value="">All</option>
           <option *ngFor="let c of meta.currencies" [value]="c">{{ c }}</option>
         </select>
       </div>
-      <div class="col-6 col-lg-2">
+      <div class="col-6 col-xl-1 col-lg-4">
+        <label class="filter-label">72 Qualifier</label>
+        <select class="form-select form-select-sm" [(ngModel)]="filters.senderToReceiverQualifier" (change)="onFilterChange()">
+          <option value="">All</option>
+          <option *ngFor="let q of meta.qualifiers" [value]="q">{{ q }}</option>
+        </select>
+      </div>
+      <div class="col-12 col-xl-2 col-lg-6">
+        <label class="filter-label">72 Category</label>
+        <select class="form-select form-select-sm" [(ngModel)]="filters.senderToReceiverCategory" (change)="onFilterChange()">
+          <option value="">All</option>
+          <option *ngFor="let cat of meta.categories" [value]="cat.key">{{ cat.label }}</option>
+        </select>
+      </div>
+      <div class="col-6 col-xl-2 col-lg-3">
         <label class="filter-label">Date From</label>
         <input type="date" class="form-control form-control-sm" [(ngModel)]="filters.dateFrom" (change)="onFilterChange()">
       </div>
-      <div class="col-6 col-lg-2">
+      <div class="col-6 col-xl-2 col-lg-3">
         <label class="filter-label">Date To</label>
         <input type="date" class="form-control form-control-sm" [(ngModel)]="filters.dateTo" (change)="onFilterChange()">
       </div>
-      <div class="col-6 col-lg-2">
+      <div class="col-12 col-xl col-lg-12">
         <button class="btn btn-outline-secondary btn-sm w-100" (click)="clearFilters()">
           <i class="bi bi-x-circle me-1"></i> Clear
         </button>
@@ -136,10 +168,10 @@
   </div>
 
   <!-- ── Data Table ──────────────────────────────────────────────────────── -->
-  <div class="section-shell bg-white rounded shadow-sm overflow-hidden">
+  <div class="section-shell modern-table-shell overflow-hidden">
 
     <!-- Table meta row -->
-    <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom">
+    <div class="table-meta d-flex align-items-center justify-content-between px-3 py-2 border-bottom">
       <div class="d-flex align-items-center gap-3">
         <span class="text-muted small">Showing <strong>{{ total }}</strong> record(s)</span>
         <span *ngIf="someSelected" class="badge bg-primary">{{ selectedIds.size }} selected</span>
