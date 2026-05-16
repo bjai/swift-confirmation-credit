@@ -102,7 +102,8 @@ export class FileWatcherService implements OnModuleInit {
       logger.info(`[PROCESSED] ${fileName} → DB id=${saved.id}`);
       this.safeMove(filePath, path.join(this.processedDir, fileName), 'processed');
     } catch (err) {
-      const errMsg: string = err?.response?.message ?? err?.message ?? String(err);
+      const e = err as any;
+      const errMsg: string = e?.response?.message ?? e?.message ?? String(err);
       const isDuplicate = errMsg.includes('Duplicate entry') || errMsg.includes('already exists');
       if (isDuplicate) {
         this.logger.warn(`[DUPLICATE] Skipped duplicate "${fileName}": ${errMsg}`);
@@ -123,7 +124,8 @@ export class FileWatcherService implements OnModuleInit {
         this.logger.log(`Moved to ${label}: ${dest}`);
       }
     } catch (moveErr) {
-      this.logger.error(`Could not move "${src}" to ${label} folder: ${moveErr?.message ?? moveErr}`);
+      const m = moveErr as any;
+      this.logger.error(`Could not move "${src}" to ${label} folder: ${m?.message ?? moveErr}`);
     }
   }
 
