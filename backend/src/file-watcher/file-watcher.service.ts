@@ -1,4 +1,5 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import logger from '../logger';
 import { ConfigService } from '@nestjs/config';
 import { Mt910Service } from '../mt910/mt910.service';
 import { Mt910ParserService } from '../mt910/mt910-parser.service';
@@ -52,7 +53,7 @@ export class FileWatcherService implements OnModuleInit {
   private startWatcher() {
     this.logger.log(`Watching folder: ${this.inputDir}`);
     this.watcher = fs.watch(this.inputDir, (eventType, filename) => {
-      if (eventType === 'rename' && filename && this.isTxtFile(filename)) {
+      if (eventType === 'rename' && filename && this.isProcessableFile(filename)) {
         const filePath = path.join(this.inputDir, filename);
         setTimeout(() => {
           if (fs.existsSync(filePath)) {
@@ -66,7 +67,7 @@ export class FileWatcherService implements OnModuleInit {
   }
 
   private processExistingFiles() {
-    const files = fs.readdirSync(this.inputDir).filter(this.isTxtFile);
+    const files = fs.readdirSync(this.inputDir).filter(this.isProcessableFile);
     if (files.length > 0) {
       this.logger.log(`Processing ${files.length} existing file(s) in input folder`);
     }
@@ -78,26 +79,37 @@ export class FileWatcherService implements OnModuleInit {
   }
 
   private async processFile(filePath: string, fileName: string): Promise<void> {
+    this.logger.log(`[PROCESS] Attempting to process file: ${fileName} (path: ${filePath})`);
+    logger.info(`[PROCESS] Attempting to process file: ${fileName} (path: ${filePath})`);
     try {
+      if (!fs.existsSync(filePath)) {
+        this.logger.warn(`[SKIP] File does not exist: ${fileName}`);
+        logger.warn(`[SKIP] File does not exist: ${fileName}`);
+        return;
+      }
       const raw = fs.readFileSync(filePath, 'utf-8');
 
       const validation = this.parser.validate(raw);
       if (!validation.valid) {
-        this.logger.warn(`Rejected "${fileName}": ${validation.reason}`);
+        this.logger.warn(`[REJECTED] "${fileName}": ${validation.reason}`);
+        logger.warn(`[REJECTED] "${fileName}": ${validation.reason}`);
         this.safeMove(filePath, path.join(this.rejectedDir, fileName), 'rejected');
         return;
       }
 
       const saved = await this.mt910Service.saveFromRaw(raw, fileName);
-      this.logger.log(`Processed: ${fileName} → DB id=${saved.id}`);
+      this.logger.log(`[PROCESSED] ${fileName} → DB id=${saved.id}`);
+      logger.info(`[PROCESSED] ${fileName} → DB id=${saved.id}`);
       this.safeMove(filePath, path.join(this.processedDir, fileName), 'processed');
     } catch (err) {
       const errMsg: string = err?.response?.message ?? err?.message ?? String(err);
       const isDuplicate = errMsg.includes('Duplicate entry') || errMsg.includes('already exists');
       if (isDuplicate) {
-        this.logger.warn(`Skipped duplicate "${fileName}": ${errMsg}`);
+        this.logger.warn(`[DUPLICATE] Skipped duplicate "${fileName}": ${errMsg}`);
+        logger.warn(`[DUPLICATE] Skipped duplicate "${fileName}": ${errMsg}`);
       } else {
-        this.logger.error(`Failed to process "${fileName}": ${errMsg}`);
+        this.logger.error(`[FAILED] Failed to process "${fileName}": ${errMsg}`);
+        logger.error(`[FAILED] Failed to process "${fileName}": ${errMsg}`);
       }
       this.safeMove(filePath, path.join(this.rejectedDir, fileName), 'rejected');
     }
@@ -115,5 +127,8 @@ export class FileWatcherService implements OnModuleInit {
     }
   }
 
-  private isTxtFile = (name: string) => name.toLowerCase().endsWith('.txt');
+  private isProcessableFile = (name: string) => {
+    const lower = name.toLowerCase();
+    return lower.endsWith('.txt') || lower.endsWith('.fin');
+  };
 }
