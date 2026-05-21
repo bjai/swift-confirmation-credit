@@ -65,19 +65,21 @@
         </div>
       </div>
 
-        <!-- Table view for Categories -->
-        <div class="table-section mt-4">
-          <div class="d-flex align-items-center justify-content-between mb-2">
-            <div class="d-flex align-items-center gap-2">
-              <label class="form-label mb-0">Filter:</label>
-              <input class="form-control form-control-sm" style="width:220px" placeholder="Filter by category name" [(ngModel)]="categoryFilter">
-            </div>
-            <div>
-              <button class="btn btn-sm btn-outline-secondary" (click)="toggleCategorySort()">
-                Sort: <i class="bi" [ngClass]="categorySortAsc ? 'bi-sort-alpha-down' : 'bi-sort-alpha-up'"></i>
-              </button>
-            </div>
+      <!-- Table view for Categories -->
+      <div class="table-section mt-4">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <div class="d-flex align-items-center gap-2">
+            <label class="form-label mb-0">Filter:</label>
+            <input class="form-control form-control-sm" style="width:220px" placeholder="Filter by category name" [(ngModel)]="categoryFilter">
           </div>
+          <div>
+            <button class="btn btn-sm btn-outline-secondary" (click)="toggleCategorySort()">
+              Sort: <i class="bi" [ngClass]="categorySortAsc ? 'bi-sort-alpha-down' : 'bi-sort-alpha-up'"></i>
+            </button>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem">
+          <!-- Left table -->
           <div class="table-responsive">
             <table class="table table-sm">
               <thead>
@@ -88,7 +90,28 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let c of filteredCategoryRows">
+                <tr *ngFor="let c of filteredCategoryRowsLeft">
+                  <td>{{ c.label }}</td>
+                  <td>{{ c.count }}</td>
+                  <td>
+                    <button class="btn btn-outline-info btn-sm" (click)="goToCategory(c.key)"><i class="bi bi-eye"></i></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- Right table -->
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th (click)="toggleCategorySort()" style="cursor:pointer">Category Name <i class="bi" [ngClass]="categorySortAsc ? 'bi-caret-down-fill' : 'bi-caret-up-fill'"></i></th>
+                  <th style="width:120px">Count</th>
+                  <th style="width:120px">View</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let c of filteredCategoryRowsRight">
                   <td>{{ c.label }}</td>
                   <td>{{ c.count }}</td>
                   <td>
@@ -99,6 +122,7 @@
             </table>
           </div>
         </div>
+      </div>
 
       <!-- By Qualifier Section -->
       <div class="dashboard-section" *ngIf="showCards && qualifierRows.length > 0">

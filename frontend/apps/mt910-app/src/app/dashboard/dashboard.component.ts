@@ -187,6 +187,16 @@ export class DashboardComponent implements OnInit {
     return rows;
   }
 
+  get filteredCategoryRowsLeft(): CategoryCount[] {
+    const all = this.filteredCategoryRows;
+    return all.slice(0, Math.ceil(all.length / 2));
+  }
+
+  get filteredCategoryRowsRight(): CategoryCount[] {
+    const all = this.filteredCategoryRows;
+    return all.slice(Math.ceil(all.length / 2));
+  }
+
   toggleCategorySort() { this.categorySortAsc = !this.categorySortAsc; }
 
   // Qualifier table helpers
