@@ -67,6 +67,23 @@
   }
 }
 
+/* Global loading overlay */
+.global-loading-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.65);
+  z-index: 10000;
+  pointer-events: all;
+}
+.global-loading-overlay .spinner-border {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-width: 0.35rem;
+}
+
 @media (max-width: 992px) {
   .brand-text {
     font-size: 16px;

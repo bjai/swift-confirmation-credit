@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import { Mt910Service, Mt910Message, FiltersMeta } from '@swift-mt910/mt910';
+import { LoadingService } from '../../loading.service';
 
 @Component({
   selector: 'app-messages-list',
@@ -16,7 +17,8 @@ export class MessagesListComponent implements OnInit {
   messages: Mt910Message[] = [];
   total = 0;
   page = 1;
-  limit = 20;
+  limit = 50;
+  pageSizes = [20, 50, 100];
   loading = false;
   uploading = false;
   uploadError = '';
@@ -71,7 +73,7 @@ export class MessagesListComponent implements OnInit {
 
   private searchSubject = new Subject<string>();
 
-  constructor(private svc: Mt910Service, private route: ActivatedRoute) {}
+  constructor(private svc: Mt910Service, private route: ActivatedRoute, private loadingSvc: LoadingService) {}
 
   ngOnInit(): void {
     // Pre-fill filters from query params (e.g. navigation from Dashboard)
@@ -94,16 +96,18 @@ export class MessagesListComponent implements OnInit {
 
   loadMessages() {
     this.loading = true;
+    this.loadingSvc.show();
     this.svc.getMessages({ ...this.filters, page: this.page, limit: this.limit }).subscribe({
       next: (res) => {
         this.messages = res.data;
         this.total = res.total;
         this.loading = false;
+        this.loadingSvc.hide();
         // Remove selections that no longer exist on this page
         const pageIds = new Set(res.data.map((m) => m.id));
         this.selectedIds.forEach((id) => { if (!pageIds.has(id)) this.selectedIds.delete(id); });
       },
-      error: () => (this.loading = false),
+      error: () => { this.loading = false; this.loadingSvc.hide(); },
     });
   }
 
@@ -111,6 +115,7 @@ export class MessagesListComponent implements OnInit {
   onFilterChange() { this.page = 1; this.loadMessages(); }
   clearFilters() { this.filters = { search: '', currency: '', senderToReceiverQualifier: '', senderToReceiverCategory: '', dateFrom: '', dateTo: '' }; this.page = 1; this.loadMessages(); }
   onPageChange(p: number) { this.page = p; this.loadMessages(); }
+  onLimitChange() { this.page = 1; this.loadMessages(); }
 
   get totalPages(): number { return Math.ceil(this.total / this.limit); }
   get pageNumbers(): number[] {
@@ -175,6 +180,51 @@ export class MessagesListComponent implements OnInit {
     a.download = `mt910_export_${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  exportAllCsv() {
+    if (this.total === 0) return;
+    const fetchLimit = this.total && this.total > 0 ? this.total : 100000;
+    this.loading = true;
+    this.loadingSvc.show();
+    this.svc.getMessages({ ...this.filters, page: 1, limit: fetchLimit }).subscribe({
+      next: (res) => {
+        this.loading = false;
+        this.loadingSvc.hide();
+        const rows = res.data;
+        if (!rows.length) return;
+
+        const headers = [
+          'ID', 'Sender Reference', 'Related Reference', 'Account Identification',
+          'Value Date / Currency / Amount', 'Ordering Customer', 'Ordering Institution',
+          'Intermediary', 'Sender to Receiver Info', 'File Name', 'Processed At',
+        ];
+
+        const csvRows = rows.map((m) => [
+          m.id,
+          this.csvCell(m.senderReference),
+          this.csvCell(m.relatedReference),
+          this.csvCell(m.accountIdentification),
+          this.csvCell(this.formatValueDateCurrencyAmount(m)),
+          this.csvCell(m.orderingCustomer),
+          this.csvCell(m.orderingInstitution),
+          this.csvCell(m.intermediary),
+          this.csvCell(m.senderToReceiverInfo),
+          this.csvCell(m.fileName),
+          this.csvCell(m.processedAt),
+        ].join(','));
+
+        const csv = [headers.join(','), ...csvRows].join('\r\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `mt910_export_all_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => { this.loading = false; this.loadingSvc.hide(); },
+    });
   }
 
   /** Format: YYMMDD + Currency + Amount (comma decimal), e.g. 260427USD125000,00 */

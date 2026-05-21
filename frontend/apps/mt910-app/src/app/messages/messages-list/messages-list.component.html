@@ -1,4 +1,5 @@
 <div class="mt910-page">
+  <!-- global overlay handles loading state -->
 
   <!-- ── Page Header ─────────────────────────────────────────────────────── -->
   <div class="page-header">
@@ -18,6 +19,9 @@
         </label>
         <button class="btn-header btn-export" [disabled]="!someSelected" (click)="exportCsv()">
           <i class="bi bi-download me-2"></i>Export CSV
+        </button>
+        <button class="btn-header btn-export" [disabled]="total === 0" (click)="exportAllCsv()" title="Export all matching records as CSV">
+          <i class="bi bi-download me-2"></i>Export All
         </button>
       </div>
     </div>
@@ -171,12 +175,17 @@
   <div class="section-shell modern-table-shell overflow-hidden">
 
     <!-- Table meta row -->
-    <div class="table-meta d-flex align-items-center justify-content-between px-3 py-2 border-bottom">
+    <div class="table-meta d-flex flex-wrap align-items-center justify-content-between px-3 py-2 border-bottom gap-3">
       <div class="d-flex align-items-center gap-3">
         <span class="text-muted small">Showing <strong>{{ total }}</strong> record(s)</span>
         <span *ngIf="someSelected" class="badge bg-primary">{{ selectedIds.size }} selected</span>
       </div>
-      <div *ngIf="loading" class="spinner-border spinner-border-sm text-primary"></div>
+      <div class="d-flex align-items-center gap-2 flex-nowrap">
+        <label class="text-muted small mb-0 text-nowrap">Per page</label>
+        <select class="form-select form-select-sm" style="width:auto; min-width:90px" [(ngModel)]="limit" (change)="onLimitChange()">
+          <option *ngFor="let size of pageSizes" [ngValue]="size">{{ size }}</option>
+        </select>
+      </div>
     </div>
 
     <div class="table-responsive">
@@ -258,13 +267,17 @@
       <nav>
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item" [class.disabled]="page===1">
-            <a class="page-link" (click)="onPageChange(page-1)">Previous</a>
+            <a class="page-link" (click)="onPageChange(page-1)">
+              <i class="bi bi-chevron-left me-1"></i>Previous
+            </a>
           </li>
           <li class="page-item" *ngFor="let p of pageNumbers" [class.active]="p===page">
             <a class="page-link" (click)="onPageChange(p)">{{ p }}</a>
           </li>
           <li class="page-item" [class.disabled]="page===totalPages">
-            <a class="page-link" (click)="onPageChange(page+1)">Next</a>
+            <a class="page-link" (click)="onPageChange(page+1)">
+              Next<i class="bi bi-chevron-right ms-1"></i>
+            </a>
           </li>
         </ul>
       </nav>

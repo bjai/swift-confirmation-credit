@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { Mt910Service, SenderToReceiverCategoryOption, QualifierSummary } from '@swift-mt910/mt910';
+import { LoadingService } from '../loading.service';
+import { FormsModule } from '@angular/forms';
 
 interface CategoryCount extends SenderToReceiverCategoryOption {
   count: number;
@@ -11,20 +13,29 @@ interface CategoryCount extends SenderToReceiverCategoryOption {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })
 export class DashboardComponent implements OnInit {
-  loading = true;
+  // local loading flag removed; using global LoadingService overlay
 
   totalMessages = 0;
   categoryRows: CategoryCount[] = [];
   qualifierRows: QualifierSummary[] = [];
+  // Table filter/sort state
+  categoryFilter = '';
+  categorySortAsc = true;
 
-  constructor(private svc: Mt910Service, private router: Router) {}
+  qualifierFilter = '';
+  qualifierSortAsc = true;
+  // Control visibility of card/grid sections (we now prefer table views)
+  showCards = false;
+
+  constructor(private svc: Mt910Service, private router: Router, private loadingSvc: LoadingService) {}
 
   ngOnInit(): void {
+    this.loadingSvc.show();
     forkJoin({
       categories: this.svc.getCategorySummary(),
       qualifiers: this.svc.getQualifierSummary(),
@@ -33,9 +44,9 @@ export class DashboardComponent implements OnInit {
         this.categoryRows = categories;
         this.qualifierRows = qualifiers;
         this.totalMessages = categories.reduce((s, r) => s + r.count, 0);
-        this.loading = false;
+        this.loadingSvc.hide();
       },
-      error: () => (this.loading = false),
+      error: () => { this.loadingSvc.hide(); },
     });
   }
 
@@ -89,41 +100,105 @@ export class DashboardComponent implements OnInit {
   }
 
   exportCsv() {
-    const rows: Array<{ type: string; label_or_code: string; count: number }> = [];
+    // Fetch available option records (currencies, categories, qualifiers) and export them
+    this.svc.getFiltersMeta().subscribe({
+      next: (meta) => {
+        const rows: Array<{ type: string; label_or_code: string; count: number }> = [];
 
-    // Add categories section
-    if (this.categoryRows.length > 0) {
-      rows.push({ type: 'Category', label_or_code: 'Category', count: 0 } as any); // Header
-      this.categoryRows.forEach((c) => {
-        rows.push({ type: 'Category', label_or_code: c.label, count: c.count });
-      });
-    }
+        // Categories (with counts if available)
+        rows.push({ type: 'Category', label_or_code: 'Category', count: 0 } as any);
+        if (this.categoryRows.length > 0) {
+          this.categoryRows.forEach((c) => rows.push({ type: 'Category', label_or_code: c.label, count: c.count }));
+        } else if (meta.categories && meta.categories.length > 0) {
+          meta.categories.forEach((c) => rows.push({ type: 'Category', label_or_code: c.label, count: 0 }));
+        }
 
-    // Add blank row for separation
-    if (rows.length > 0 && this.qualifierRows.length > 0) {
-      rows.push({ type: '', label_or_code: '', count: 0 } as any);
-    }
+        // Separator
+        rows.push({ type: '', label_or_code: '', count: 0 } as any);
 
-    // Add qualifiers section
-    if (this.qualifierRows.length > 0) {
-      rows.push({ type: 'Qualifier', label_or_code: 'Qualifier', count: 0 } as any); // Header
-      this.qualifierRows.forEach((q) => {
-        rows.push({ type: 'Qualifier', label_or_code: q.qualifier, count: q.count });
-      });
-    }
+        // Qualifiers
+        rows.push({ type: 'Qualifier', label_or_code: 'Qualifier', count: 0 } as any);
+        if (this.qualifierRows.length > 0) {
+          this.qualifierRows.forEach((q) => rows.push({ type: 'Qualifier', label_or_code: q.qualifier, count: q.count }));
+        } else if (meta.qualifiers && meta.qualifiers.length > 0) {
+          meta.qualifiers.forEach((q) => rows.push({ type: 'Qualifier', label_or_code: q, count: 0 }));
+        }
 
-    if (rows.length === 0) return;
+        // Separator
+        rows.push({ type: '', label_or_code: '', count: 0 } as any);
 
-    const headers = ['Type', 'Label/Code', 'Count'];
-    const csvRows = rows.map((r) => [r.type, r.label_or_code, r.count.toString()].join(','));
-    const csv = [headers.join(','), ...csvRows].join('\r\n');
+        // Currencies
+        rows.push({ type: 'Currency', label_or_code: 'Currency', count: 0 } as any);
+        if (meta.currencies && meta.currencies.length > 0) {
+          meta.currencies.forEach((c) => rows.push({ type: 'Currency', label_or_code: c, count: 0 }));
+        }
 
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `dashboard_summary_${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+        if (rows.length === 0) return;
+
+        const headers = ['Type', 'Label/Code', 'Count'];
+        const csvRows = rows.map((r) => [r.type, `"${r.label_or_code}"`, r.count.toString()].join(','));
+        const csv = [headers.join(','), ...csvRows].join('\r\n');
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `dashboard_summary_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => {
+        // Fallback to existing in-memory rows if meta fetch fails
+        const rows: Array<{ type: string; label_or_code: string; count: number }> = [];
+        if (this.categoryRows.length > 0) {
+          rows.push({ type: 'Category', label_or_code: 'Category', count: 0 } as any);
+          this.categoryRows.forEach((c) => rows.push({ type: 'Category', label_or_code: c.label, count: c.count }));
+        }
+        if (rows.length > 0 && this.qualifierRows.length > 0) {
+          rows.push({ type: '', label_or_code: '', count: 0 } as any);
+        }
+        if (this.qualifierRows.length > 0) {
+          rows.push({ type: 'Qualifier', label_or_code: 'Qualifier', count: 0 } as any);
+          this.qualifierRows.forEach((q) => rows.push({ type: 'Qualifier', label_or_code: q.qualifier, count: q.count }));
+        }
+        if (rows.length === 0) return;
+        const headers = ['Type', 'Label/Code', 'Count'];
+        const csvRows = rows.map((r) => [r.type, `"${r.label_or_code}"`, r.count.toString()].join(','));
+        const csv = [headers.join(','), ...csvRows].join('\r\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `dashboard_summary_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+    });
   }
+
+  // Category table helpers
+  get filteredCategoryRows(): CategoryCount[] {
+    let rows = this.categoryRows.slice();
+    if (this.categoryFilter && this.categoryFilter.trim() !== '') {
+      const f = this.categoryFilter.trim().toLowerCase();
+      rows = rows.filter(r => (r.label || '').toLowerCase().includes(f));
+    }
+    rows.sort((a, b) => this.categorySortAsc ? a.label.localeCompare(b.label) : b.label.localeCompare(a.label));
+    return rows;
+  }
+
+  toggleCategorySort() { this.categorySortAsc = !this.categorySortAsc; }
+
+  // Qualifier table helpers
+  get filteredQualifierRows(): QualifierSummary[] {
+    let rows = this.qualifierRows.slice();
+    if (this.qualifierFilter && this.qualifierFilter.trim() !== '') {
+      const f = this.qualifierFilter.trim().toLowerCase();
+      rows = rows.filter(r => (r.qualifier || '').toLowerCase().includes(f));
+    }
+    rows.sort((a, b) => this.qualifierSortAsc ? a.qualifier.localeCompare(b.qualifier) : b.qualifier.localeCompare(a.qualifier));
+    return rows;
+  }
+
+  toggleQualifierSort() { this.qualifierSortAsc = !this.qualifierSortAsc; }
 }

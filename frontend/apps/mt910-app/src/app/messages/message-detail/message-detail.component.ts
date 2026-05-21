@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Mt910Service, Mt910Message } from '@swift-mt910/mt910';
+import { LoadingService } from '../../loading.service';
 
 @Component({
   selector: 'app-message-detail',
@@ -11,18 +12,18 @@ import { Mt910Service, Mt910Message } from '@swift-mt910/mt910';
 })
 export class MessageDetailComponent implements OnInit {
   message: Mt910Message | null = null;
-  loading = true;
   error = '';
   deleting = false;
   showConfirm = false;
 
-  constructor(private route: ActivatedRoute, private router: Router, private svc: Mt910Service) {}
+  constructor(private route: ActivatedRoute, private router: Router, private svc: Mt910Service, private loadingSvc: LoadingService) {}
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
+    this.loadingSvc.show();
     this.svc.getMessage(id).subscribe({
-      next: (msg) => { this.message = msg; this.loading = false; },
-      error: () => { this.error = 'Message not found.'; this.loading = false; },
+      next: (msg) => { this.message = msg; this.loadingSvc.hide(); },
+      error: () => { this.error = 'Message not found.'; this.loadingSvc.hide(); },
     });
   }
 

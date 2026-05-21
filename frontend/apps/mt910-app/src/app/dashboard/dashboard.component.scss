@@ -258,6 +258,79 @@
   }
 }
 
+.table-section {
+  background: white;
+  border-radius: 0.9rem;
+  padding: 0.85rem 0.9rem;
+  box-shadow: 0 1px 10px rgba(15, 23, 42, 0.06);
+  margin: 1rem 0;
+}
+
+.table-section .form-label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.table-section .form-control {
+  min-width: 190px;
+  max-width: 280px;
+}
+
+.table-section table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-section th,
+.table-section td {
+  padding: 0.55rem 0.7rem;
+  vertical-align: middle;
+  border: none;
+}
+
+.table-section thead th {
+  background: #f8fafc;
+  color: #334155;
+  font-weight: 700;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.table-section tbody tr {
+  transition: background 0.2s ease;
+}
+
+.table-section tbody tr:nth-child(odd) td {
+  background: #ffffff;
+}
+
+.table-section tbody tr:nth-child(even) td {
+  background: #f8fafc;
+}
+
+.table-section tbody tr:hover td {
+  background: #e2efff;
+}
+
+.table-section td {
+  color: #475569;
+}
+
+.table-section td button {
+  min-width: 46px;
+}
+
+@media (max-width: 992px) {
+  .table-section {
+    padding: 1rem;
+  }
+
+  .table-section .form-control {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
 .card-header {
   display: flex;
   align-items: flex-start;
@@ -399,6 +472,28 @@
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 1.25rem;
   }
+
+/* Full screen loading overlay that blocks actions */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.65);
+  z-index: 9999;
+  pointer-events: all;
+}
+
+.loading-overlay .spinner-border {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 3.5rem;
+  height: 3.5rem;
+  border-width: 0.35rem;
+}
 
   .header-content {
     flex-direction: column;
