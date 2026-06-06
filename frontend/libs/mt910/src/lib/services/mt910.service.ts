@@ -18,6 +18,11 @@ export class Mt910Service {
     senderToReceiverCategory?: string;
     dateFrom?: string;
     dateTo?: string;
+    valueDateFrom?: string;
+    valueDateTo?: string;
+    processedDateFrom?: string;
+    processedDateTo?: string;
+    messageType?: 'MT910' | 'MT900';
     page?: number;
     limit?: number;
   }): Observable<MessageListResponse> {
@@ -28,6 +33,11 @@ export class Mt910Service {
     if (filters.senderToReceiverCategory) params = params.set('senderToReceiverCategory', filters.senderToReceiverCategory);
     if (filters.dateFrom) params = params.set('dateFrom', filters.dateFrom);
     if (filters.dateTo) params = params.set('dateTo', filters.dateTo);
+    if (filters.valueDateFrom) params = params.set('valueDateFrom', filters.valueDateFrom);
+    if (filters.valueDateTo) params = params.set('valueDateTo', filters.valueDateTo);
+    if (filters.processedDateFrom) params = params.set('processedDateFrom', filters.processedDateFrom);
+    if (filters.processedDateTo) params = params.set('processedDateTo', filters.processedDateTo);
+    if (filters.messageType) params = params.set('messageType', filters.messageType);
     if (filters.page) params = params.set('page', filters.page.toString());
     if (filters.limit) params = params.set('limit', filters.limit.toString());
     return this.http.get<MessageListResponse>(`${this.base}/messages`, { params });
@@ -53,12 +63,20 @@ export class Mt910Service {
     return this.http.get<FiltersMeta>(`${this.base}/filters/meta`);
   }
 
-  getCategorySummary(): Observable<Array<SenderToReceiverCategoryOption & { count: number }>> {
-    return this.http.get<Array<SenderToReceiverCategoryOption & { count: number }>>(`${this.base}/messages/category-summary`);
+  getCategorySummary(valueDateFrom?: string, valueDateTo?: string, messageType: 'MT910' | 'MT900' = 'MT910'): Observable<Array<SenderToReceiverCategoryOption & { count: number }>> {
+    let params = new HttpParams();
+    if (valueDateFrom) params = params.set('valueDateFrom', valueDateFrom);
+    if (valueDateTo) params = params.set('valueDateTo', valueDateTo);
+    params = params.set('messageType', messageType);
+    return this.http.get<Array<SenderToReceiverCategoryOption & { count: number }>>(`${this.base}/messages/category-summary`, { params });
   }
 
-  getQualifierSummary(): Observable<QualifierSummary[]> {
-    return this.http.get<QualifierSummary[]>(`${this.base}/messages/qualifier-summary`);
+  getQualifierSummary(valueDateFrom?: string, valueDateTo?: string, messageType: 'MT910' | 'MT900' = 'MT910'): Observable<QualifierSummary[]> {
+    let params = new HttpParams();
+    if (valueDateFrom) params = params.set('valueDateFrom', valueDateFrom);
+    if (valueDateTo) params = params.set('valueDateTo', valueDateTo);
+    params = params.set('messageType', messageType);
+    return this.http.get<QualifierSummary[]>(`${this.base}/messages/qualifier-summary`, { params });
   }
 
   reclassifySenderToReceiverInfo(): Observable<{ updated: number }> {

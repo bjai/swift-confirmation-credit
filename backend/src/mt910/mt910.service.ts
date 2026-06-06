@@ -47,13 +47,17 @@ export class Mt910Service {
       rawContent,
       fileName,
       processedAt: new Date().toISOString(),
+      messageType: this.parser.detectMessageType(rawContent),
     });
     return this.repo.save(msg);
   }
 
   async findAll(query: QueryMt910Dto): Promise<{ data: Mt910Message[]; total: number; page: number; limit: number }> {
-    const { search, currency, senderToReceiverCategory, senderToReceiverQualifier, dateFrom, dateTo, page = 1, limit = 20 } = query;
+    const { search, currency, senderToReceiverCategory, senderToReceiverQualifier, valueDateFrom, valueDateTo, dateFrom, dateTo, processedDateFrom, processedDateTo, messageType = 'MT910', page = 1, limit = 20 } = query;
     const qb = this.repo.createQueryBuilder('m');
+
+    // Filter by message type
+    qb.andWhere('m.messageType = :messageType', { messageType });
 
     if (search) {
       qb.andWhere(
@@ -76,11 +80,24 @@ export class Mt910Service {
     if (senderToReceiverQualifier) {
       qb.andWhere('m.senderToReceiverQualifier = :senderToReceiverQualifier', { senderToReceiverQualifier });
     }
-    if (dateFrom) {
+    if (valueDateFrom) {
+      qb.andWhere('m.valueDate >= :valueDateFrom', { valueDateFrom });
+    }
+    if (valueDateTo) {
+      qb.andWhere('m.valueDate <= :valueDateTo', { valueDateTo });
+    }
+    // Support for legacy dateFrom/dateTo parameters (for backwards compatibility)
+    if (dateFrom && !valueDateFrom) {
       qb.andWhere('m.valueDate >= :dateFrom', { dateFrom });
     }
-    if (dateTo) {
+    if (dateTo && !valueDateTo) {
       qb.andWhere('m.valueDate <= :dateTo', { dateTo });
+    }
+    if (processedDateFrom) {
+      qb.andWhere('m.processedAt >= :processedDateFrom', { processedDateFrom });
+    }
+    if (processedDateTo) {
+      qb.andWhere('m.processedAt <= :processedDateTo', { processedDateTo });
     }
 
     qb.orderBy('m.createdAt', 'DESC');
@@ -153,13 +170,21 @@ export class Mt910Service {
     };
   }
 
-  async categorySummary(): Promise<CategorySummary[]> {
+  async categorySummary(valueDateFrom?: string, valueDateTo?: string, messageType: 'MT910' | 'MT900' = 'MT910'): Promise<CategorySummary[]> {
     try {
-      const rows = await this.repo
+      let qb = this.repo
         .createQueryBuilder('m')
         .select('COALESCE(m.senderToReceiverCategory, \'uncategorized\')', 'key')
         .addSelect('COALESCE(m.senderToReceiverCategoryLabel, \'Other\')', 'label')
         .addSelect('COUNT(1)', 'count')
+        .andWhere('m.messageType = :messageType', { messageType });
+      if (valueDateFrom) {
+        qb = qb.andWhere('m.valueDate >= :valueDateFrom', { valueDateFrom });
+      }
+      if (valueDateTo) {
+        qb = qb.andWhere('m.valueDate <= :valueDateTo', { valueDateTo });
+      }
+      const rows = await qb
         .groupBy("COALESCE(m.senderToReceiverCategory, 'uncategorized')")
         .addGroupBy("COALESCE(m.senderToReceiverCategoryLabel, 'Other')")
         .orderBy('COUNT(1)', 'DESC')
@@ -170,13 +195,21 @@ export class Mt910Service {
     }
   }
 
-  async qualifierSummary(): Promise<Array<{ qualifier: string; count: number }>> {
+  async qualifierSummary(valueDateFrom?: string, valueDateTo?: string, messageType: 'MT910' | 'MT900' = 'MT910'): Promise<Array<{ qualifier: string; count: number }>> {
     try {
-      const rows = await this.repo
+      let qb = this.repo
         .createQueryBuilder('m')
         .select('m.senderToReceiverQualifier', 'qualifier')
         .addSelect('COUNT(1)', 'count')
         .where('m.senderToReceiverQualifier IS NOT NULL')
+        .andWhere('m.messageType = :messageType', { messageType });
+      if (valueDateFrom) {
+        qb = qb.andWhere('m.valueDate >= :valueDateFrom', { valueDateFrom });
+      }
+      if (valueDateTo) {
+        qb = qb.andWhere('m.valueDate <= :valueDateTo', { valueDateTo });
+      }
+      const rows = await qb
         .groupBy('m.senderToReceiverQualifier')
         .orderBy('COUNT(1)', 'DESC')
         .getRawMany();

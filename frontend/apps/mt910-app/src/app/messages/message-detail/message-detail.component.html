@@ -37,13 +37,24 @@
     </button>
   </div>
 
+  <!-- ── Message Navigation ──────────────────────────────────────────────── -->
+  <div *ngIf="message" class="mb-3 d-flex align-items-center justify-content-center gap-2">
+    <button class="btn btn-primary btn-sm" (click)="goToMessage(previousMessageId!)" [disabled]="!previousMessageId">
+      <i class="bi bi-chevron-left me-1"></i> Previous
+    </button>
+    <span class="text-muted small">{{ message.senderReference }}</span>
+    <button class="btn btn-primary btn-sm" (click)="goToMessage(nextMessageId!)" [disabled]="!nextMessageId">
+      Next <i class="bi bi-chevron-right ms-1"></i>
+    </button>
+  </div>
+
   <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
 
   <div *ngIf="message">
     <div class="card shadow-sm mb-4">
       <div class="card-body d-flex align-items-center justify-content-between">
         <div>
-          <h5 class="mb-0 fw-bold">Confirmation of Credit</h5>
+          <h5 class="mb-0 fw-bold">Credit Confirmation</h5>
           <small class="text-muted">{{ message.fileName }} · Processed: {{ message.processedAt | date:'medium' }}</small>
         </div>
         <div class="text-end">

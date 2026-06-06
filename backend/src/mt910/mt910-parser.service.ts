@@ -29,6 +29,22 @@ export interface ValidationResult {
 @Injectable()
 export class Mt910ParserService {
 
+  /** Detect message type from raw SWIFT content (MT910 or MT900) */
+  detectMessageType(raw: string): 'MT910' | 'MT900' {
+    // Extract :2: field which contains the message indicator
+    const block2Match = raw.match(/\{2:([^\}]+)\}/);
+    if (!block2Match) return 'MT910'; // Default to MT910
+    
+    const block2Content = block2Match[1];
+    // Extract the indicator: I910, O910, I900, O900, 0910, 0900, etc.
+    // Look for 900 or 910 (the message type code)
+    const indicatorMatch = block2Content.match(/(900|910)/);
+    if (!indicatorMatch) return 'MT910';
+    
+    const indicator = indicatorMatch[1]; // Extract 900 or 910
+    return indicator === '900' ? 'MT900' : 'MT910';
+  }
+
   /** Validate raw content before parsing */
   validate(raw: string): ValidationResult {
     if (!raw || raw.trim().length === 0) {

@@ -76,6 +76,10 @@ export class Mt910Message {
   @Column()
   processedAt: string;
 
+  /** Message Type: MT910 (Credit) or MT900 (Debit) */
+  @Column({ default: 'MT910' })
+  messageType: 'MT910' | 'MT900';
+
   @CreateDateColumn()
   createdAt: Date;
 }

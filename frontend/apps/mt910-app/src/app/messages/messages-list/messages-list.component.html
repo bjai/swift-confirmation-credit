@@ -5,7 +5,7 @@
   <div class="page-header">
     <div class="header-content">
       <div class="header-left">
-        <h1 class="header-title">Confirmation of Credit</h1>
+        <h1 class="header-title">Credit Confirmation</h1>
         <p class="header-subtitle">MT910 SWIFT incoming credit confirmations</p>
       </div>
       <div class="header-actions">
@@ -129,6 +129,14 @@
   <!-- ── Filter Bar ──────────────────────────────────────────────────────── -->
   <div class="filter-bar section-shell mb-3 px-3 py-3 bg-white rounded shadow-sm">
     <div class="row g-2 align-items-end">
+      <div class="col-6 col-xl-2 col-lg-3">
+        <label class="filter-label">Value Date From</label>
+        <input type="date" class="form-control form-control-sm" [(ngModel)]="filters.valueDateFrom" (change)="onFilterChange()">
+      </div>
+      <div class="col-6 col-xl-2 col-lg-3">
+        <label class="filter-label">Value Date To</label>
+        <input type="date" class="form-control form-control-sm" [(ngModel)]="filters.valueDateTo" (change)="onFilterChange()">
+      </div>
       <div class="col-12 col-xl-3 col-lg-4">
         <label class="filter-label">Search</label>
         <input type="text" class="form-control form-control-sm" placeholder="Reference, customer, account..."
@@ -141,13 +149,7 @@
           <option *ngFor="let c of meta.currencies" [value]="c">{{ c }}</option>
         </select>
       </div>
-      <div class="col-6 col-xl-1 col-lg-4">
-        <label class="filter-label">72 Qualifier</label>
-        <select class="form-select form-select-sm" [(ngModel)]="filters.senderToReceiverQualifier" (change)="onFilterChange()">
-          <option value="">All</option>
-          <option *ngFor="let q of meta.qualifiers" [value]="q">{{ q }}</option>
-        </select>
-      </div>
+      <!-- 72 Qualifier filter hidden -->
       <div class="col-12 col-xl-2 col-lg-6">
         <label class="filter-label">72 Category</label>
         <select class="form-select form-select-sm" [(ngModel)]="filters.senderToReceiverCategory" (change)="onFilterChange()">
@@ -156,16 +158,16 @@
         </select>
       </div>
       <div class="col-6 col-xl-2 col-lg-3">
-        <label class="filter-label">Date From</label>
-        <input type="date" class="form-control form-control-sm" [(ngModel)]="filters.dateFrom" (change)="onFilterChange()">
+        <label class="filter-label">Processed Date From</label>
+        <input type="date" class="form-control form-control-sm" [(ngModel)]="filters.processedDateFrom" (change)="onFilterChange()">
       </div>
       <div class="col-6 col-xl-2 col-lg-3">
-        <label class="filter-label">Date To</label>
-        <input type="date" class="form-control form-control-sm" [(ngModel)]="filters.dateTo" (change)="onFilterChange()">
+        <label class="filter-label">Processed Date To</label>
+        <input type="date" class="form-control form-control-sm" [(ngModel)]="filters.processedDateTo" (change)="onFilterChange()">
       </div>
       <div class="col-12 col-xl col-lg-12">
-        <button class="btn btn-outline-secondary btn-sm w-100" (click)="clearFilters()">
-          <i class="bi bi-x-circle me-1"></i> Clear
+        <button class="btn btn-sm btn-outline-secondary px-2 py-1" title="Clear all filters" (click)="clearFilters()">
+          <i class="bi bi-x-circle"></i>
         </button>
       </div>
     </div>
@@ -198,12 +200,12 @@
                 [indeterminate]="someSelected && !allSelected"
                 (change)="toggleAll($any($event.target).checked)">
             </th>
-            <th style="width:40px">#</th>
             <th style="width:160px">Sender Ref</th>
             <th class="d-none d-xl-table-cell" style="width:110px">Related Ref</th>
             <th class="d-none d-xl-table-cell" style="width:110px">Account</th>
             <th class="d-none d-lg-table-cell" style="width:96px">Value Date</th>
             <th style="width:75px">Currency</th>
+            <th style="width:70px">Type</th>
             <th class="text-end" style="width:110px">Amount</th>
             <th style="width:320px">Ordering Customer</th>
             <th style="width:220px">Sender to Receiver Info</th>
@@ -222,9 +224,8 @@
                 [checked]="selectedIds.has(msg.id)"
                 (change)="toggleRow(msg.id, $any($event.target).checked)">
             </td>
-            <td class="text-muted">{{ msg.id }}</td>
             <td style="width:160px" [title]="msg.senderReference">
-              <span class="sender-ref-link">{{ msg.senderReference }}</span>
+              <a [routerLink]="['/messages', msg.id]" class="sender-ref-link">{{ msg.senderReference }}</a>
             </td>
             <td class="text-truncate d-none d-xl-table-cell" style="max-width:110px" [title]="msg.relatedReference">
               <code class="text-secondary" style="font-size:.82rem">{{ msg.relatedReference }}</code>
@@ -232,6 +233,7 @@
             <td class="text-truncate d-none d-xl-table-cell" style="max-width:110px" [title]="msg.accountIdentification">{{ msg.accountIdentification }}</td>
             <td class="d-none d-lg-table-cell">{{ msg.valueDate }}</td>
             <td><span class="badge bg-primary">{{ msg.currency }}</span></td>
+            <td><span class="badge" [class.bg-primary]="msg.messageType === 'MT910'" [class.bg-warning]="msg.messageType === 'MT900'">{{ msg.messageType }}</span></td>
             <td class="text-end fw-semibold">{{ msg.amount | number:'1.2-2' }}</td>
             <td class="text-truncate" style="max-width:320px" [title]="msg.orderingCustomer">{{ msg.orderingCustomer?.startsWith('/') ? msg.orderingCustomer.slice(1) : msg.orderingCustomer }}</td>
             <td class="sender-info-cell" style="max-width:220px">

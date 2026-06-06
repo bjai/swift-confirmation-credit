@@ -17,6 +17,7 @@ export interface Mt910Message {
   rawContent: string;
   processedAt: string;
   createdAt: string;
+  messageType: 'MT910' | 'MT900';
 }
 
 export interface QualifierSummary {

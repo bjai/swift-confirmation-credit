@@ -44,14 +44,14 @@ export class Mt910Controller {
 
   /** GET /api/mt910/messages/category-summary */
   @Get('messages/category-summary')
-  categorySummary(): Promise<CategorySummary[]> {
-    return this.service.categorySummary();
+  categorySummary(@Query('valueDateFrom') valueDateFrom?: string, @Query('valueDateTo') valueDateTo?: string, @Query('messageType') messageType?: 'MT910' | 'MT900') {
+    return this.service.categorySummary(valueDateFrom, valueDateTo, messageType || 'MT910');
   }
 
   /** GET /api/mt910/messages/qualifier-summary */
   @Get('messages/qualifier-summary')
-  qualifierSummary() {
-    return this.service.qualifierSummary();
+  qualifierSummary(@Query('valueDateFrom') valueDateFrom?: string, @Query('valueDateTo') valueDateTo?: string, @Query('messageType') messageType?: 'MT910' | 'MT900') {
+    return this.service.qualifierSummary(valueDateFrom, valueDateTo, messageType || 'MT910');
   }
 
   /** POST /api/mt910/messages/reclassify-72 */

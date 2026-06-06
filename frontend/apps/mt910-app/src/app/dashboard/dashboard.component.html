@@ -13,6 +13,27 @@
         </button>
       </div>
     </div>
+    
+    <!-- Date Filters ────────────────────────────────────────────────── -->
+    <div class="header-filters mt-3 p-3 bg-white rounded shadow-sm d-flex align-items-end gap-3">
+      <div>
+        <label class="form-label small fw-bold text-muted mb-1">Value Date From</label>
+        <input type="date" class="form-control form-control-sm" [(ngModel)]="valueDateFrom">
+      </div>
+      <div>
+        <label class="form-label small fw-bold text-muted mb-1">Value Date To</label>
+        <input type="date" class="form-control form-control-sm" [(ngModel)]="valueDateTo">
+      </div>
+      <div class="ms-auto d-flex gap-2">
+        <button class="btn btn-sm btn-primary" (click)="onDateFilterChange()">
+          <i class="bi bi-funnel me-1"></i>Apply Filter
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" (click)="ngOnInit()" title="Reset to default">
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+      </div>
+    </div>
+
     <div class="header-stats">
       <div class="stat-badge">
         <span class="badge-icon"><i class="bi bi-envelope-check"></i></span>
@@ -124,67 +145,8 @@
         </div>
       </div>
 
-      <!-- By Qualifier Section -->
-      <div class="dashboard-section" *ngIf="showCards && qualifierRows.length > 0">
-        <div class="section-header">
-          <div class="section-title">
-            <i class="bi bi-tag-fill"></i>
-            <span>By :72: Qualifier</span>
-          </div>
-          <span class="section-count">{{ qualifierRows.length }} types</span>
-        </div>
-        <div class="cards-grid">
-          <div *ngFor="let q of qualifierRows"
-               class="metric-card qualifier-card"
-               [class.card-disabled]="q.qualifier === '—'"
-               (click)="goToQualifier(q.qualifier)">
-            <div class="card-header">
-              <div class="card-icon qualifier-icon"><i class="bi bi-arrow-left-right"></i></div>
-              <div class="card-action" *ngIf="q.qualifier !== '—'"><i class="bi bi-chevron-right"></i></div>
-            </div>
-            <div class="card-body">
-              <div class="card-value">{{ q.count }}</div>
-              <div class="card-label">{{ q.qualifier }}</div>
-            </div>
-            <div class="card-footer">{{ q.qualifier === '—' ? 'No Qualifier' : 'View Details' }}</div>
-          </div>
-        </div>
-      </div>
-
-        <!-- Table view for Qualifiers -->
-        <div class="table-section mt-4">
-          <div class="d-flex align-items-center justify-content-between mb-2">
-            <div class="d-flex align-items-center gap-2">
-              <label class="form-label mb-0">Filter:</label>
-              <input class="form-control form-control-sm" style="width:220px" placeholder="Filter by qualifier" [(ngModel)]="qualifierFilter">
-            </div>
-            <div>
-              <button class="btn btn-sm btn-outline-secondary" (click)="toggleQualifierSort()">
-                Sort: <i class="bi" [ngClass]="qualifierSortAsc ? 'bi-sort-alpha-down' : 'bi-sort-alpha-up'"></i>
-              </button>
-            </div>
-          </div>
-          <div class="table-responsive">
-            <table class="table table-sm">
-              <thead>
-                <tr>
-                  <th (click)="toggleQualifierSort()" style="cursor:pointer">Qualifier Name <i class="bi" [ngClass]="qualifierSortAsc ? 'bi-caret-down-fill' : 'bi-caret-up-fill'"></i></th>
-                  <th style="width:120px">Count</th>
-                  <th style="width:120px">View</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let q of filteredQualifierRows">
-                  <td>{{ q.qualifier === '—' ? 'No Qualifier' : q.qualifier }}</td>
-                  <td>{{ q.count }}</td>
-                  <td>
-                    <button class="btn btn-outline-info btn-sm" (click)="goToQualifier(q.qualifier)" [disabled]="q.qualifier==='—'"><i class="bi bi-eye"></i></button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+      <!-- By Qualifier Section - HIDDEN -->
+      <!-- Qualifier display removed as requested -->
 
     </ng-container>
 

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { Mt910Service, SenderToReceiverCategoryOption, QualifierSummary } from '@swift-mt910/mt910';
 import { LoadingService } from '../loading.service';
@@ -32,13 +32,29 @@ export class DashboardComponent implements OnInit {
   // Control visibility of card/grid sections (we now prefer table views)
   showCards = false;
 
-  constructor(private svc: Mt910Service, private router: Router, private loadingSvc: LoadingService) {}
+  valueDateFrom: string = '';
+  valueDateTo: string = '';
+  messageType: 'MT910' | 'MT900' = 'MT910';
+
+  constructor(private svc: Mt910Service, private router: Router, private route: ActivatedRoute, private loadingSvc: LoadingService) {}
 
   ngOnInit(): void {
+    this.route.data.subscribe((data) => {
+      this.messageType = data['messageType'] || 'MT910';
+    });
+
+    const today = new Date();
+    this.valueDateFrom = '2025-01-01';
+    this.valueDateTo = today.toISOString().slice(0, 10);
+    // Load all data without filter on page load
+    this.loadAllSummaries();
+  }
+
+  loadAllSummaries(): void {
     this.loadingSvc.show();
     forkJoin({
-      categories: this.svc.getCategorySummary(),
-      qualifiers: this.svc.getQualifierSummary(),
+      categories: this.svc.getCategorySummary(undefined, undefined, this.messageType),
+      qualifiers: this.svc.getQualifierSummary(undefined, undefined, this.messageType),
     }).subscribe({
       next: ({ categories, qualifiers }) => {
         this.categoryRows = categories;
@@ -50,15 +66,35 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  loadSummaries(): void {
+    this.loadingSvc.show();
+    forkJoin({
+      categories: this.svc.getCategorySummary(this.valueDateFrom, this.valueDateTo, this.messageType),
+      qualifiers: this.svc.getQualifierSummary(this.valueDateFrom, this.valueDateTo, this.messageType),
+    }).subscribe({
+      next: ({ categories, qualifiers }) => {
+        this.categoryRows = categories;
+        this.qualifierRows = qualifiers;
+        this.totalMessages = categories.reduce((s, r) => s + r.count, 0);
+        this.loadingSvc.hide();
+      },
+      error: () => { this.loadingSvc.hide(); },
+    });
+  }
+
+  onDateFilterChange(): void {
+    this.loadSummaries();
+  }
+
   goToCategory(key: string) {
-    this.router.navigate(['/messages'], {
+    this.router.navigate([`/${this.messageType.toLowerCase()}/messages`], {
       queryParams: { senderToReceiverCategory: key },
     });
   }
 
   goToQualifier(qualifier: string) {
     if (qualifier === '—') return;
-    this.router.navigate(['/messages'], {
+    this.router.navigate([`/${this.messageType.toLowerCase()}/messages`], {
       queryParams: { senderToReceiverQualifier: qualifier },
     });
   }

@@ -26,8 +26,19 @@ export class MessagesListComponent implements OnInit {
   deletingId: number | null = null;
   showDeleteConfirm = false;
   private deleteTargetId: number | null = null;
-  filters = { search: '', currency: '', senderToReceiverQualifier: '', senderToReceiverCategory: '', dateFrom: '', dateTo: '' };
+  filters: {
+    search: string;
+    currency: string;
+    senderToReceiverQualifier: string;
+    senderToReceiverCategory: string;
+    valueDateFrom: string;
+    valueDateTo: string;
+    processedDateFrom: string;
+    processedDateTo: string;
+    messageType: 'MT910' | 'MT900';
+  } = { search: '', currency: '', senderToReceiverQualifier: '', senderToReceiverCategory: '', valueDateFrom: '', valueDateTo: '', processedDateFrom: '', processedDateTo: '', messageType: 'MT910' };
   meta: FiltersMeta = { currencies: [], qualifiers: [], categories: [], minDate: '', maxDate: '' };
+  messageType: 'MT910' | 'MT900' = 'MT910';
 
   selectedIds = new Set<number>();
 
@@ -76,6 +87,12 @@ export class MessagesListComponent implements OnInit {
   constructor(private svc: Mt910Service, private route: ActivatedRoute, private loadingSvc: LoadingService) {}
 
   ngOnInit(): void {
+    // Extract messageType from route data
+    this.route.data.subscribe((data) => {
+      this.messageType = data['messageType'] || 'MT910';
+      this.filters.messageType = this.messageType;
+    });
+
     // Pre-fill filters from query params (e.g. navigation from Dashboard)
     const qp = this.route.snapshot.queryParamMap;
     if (qp.get('senderToReceiverCategory')) {
@@ -113,7 +130,7 @@ export class MessagesListComponent implements OnInit {
 
   onSearchChange(value: string) { this.filters.search = value; this.searchSubject.next(value); }
   onFilterChange() { this.page = 1; this.loadMessages(); }
-  clearFilters() { this.filters = { search: '', currency: '', senderToReceiverQualifier: '', senderToReceiverCategory: '', dateFrom: '', dateTo: '' }; this.page = 1; this.loadMessages(); }
+  clearFilters() { this.filters = { search: '', currency: '', senderToReceiverQualifier: '', senderToReceiverCategory: '', valueDateFrom: '', valueDateTo: '', processedDateFrom: '', processedDateTo: '', messageType: this.messageType }; this.page = 1; this.loadMessages(); }
   onPageChange(p: number) { this.page = p; this.loadMessages(); }
   onLimitChange() { this.page = 1; this.loadMessages(); }
 
