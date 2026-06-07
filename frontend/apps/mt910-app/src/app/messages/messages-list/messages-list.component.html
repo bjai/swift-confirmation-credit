@@ -225,7 +225,7 @@
                 (change)="toggleRow(msg.id, $any($event.target).checked)">
             </td>
             <td style="width:160px" [title]="msg.senderReference">
-              <a [routerLink]="['/messages', msg.id]" class="sender-ref-link">{{ msg.senderReference }}</a>
+              <a [routerLink]="['/' + messageType.toLowerCase() + '/messages', msg.id]" class="sender-ref-link">{{ msg.senderReference }}</a>
             </td>
             <td class="text-truncate d-none d-xl-table-cell" style="max-width:110px" [title]="msg.relatedReference">
               <code class="text-secondary" style="font-size:.82rem">{{ msg.relatedReference }}</code>
@@ -245,11 +245,11 @@
               <ng-template #noInfo><span class="text-muted fst-italic small">—</span></ng-template>
             </td>
             <td style="width:90px">
-              <div class="d-flex align-items-center gap-2">
-                <a [routerLink]="['/messages', msg.id]" class="btn btn-outline-info btn-sm px-2" title="View details">
+              <div class="d-flex align-items-center justify-content-center gap-1">
+                <a [routerLink]="['/' + messageType.toLowerCase() + '/messages', msg.id]" class="btn btn-outline-info btn-sm px-2" title="View details">
                   <i class="bi bi-eye"></i>
                 </a>
-                <button class="btn btn-outline-danger btn-sm px-2"
+                <button class="btn btn-outline-danger btn-sm px-2 d-none"
                         title="Delete"
                         (click)="deleteRow(msg.id)"
                         [disabled]="deletingId === msg.id">

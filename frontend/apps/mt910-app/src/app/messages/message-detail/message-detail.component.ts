@@ -61,10 +61,10 @@ export class MessageDetailComponent implements OnInit {
   }
 
   goToMessage(id: number) {
-    this.router.navigate(['/messages', id]);
+    this.router.navigate([`/${this.messageType.toLowerCase()}/messages`, id]);
   }
 
-  goBack() { this.router.navigate(['/messages']); }
+  goBack() { this.router.navigate([`/${this.messageType.toLowerCase()}/messages`]); }
 
   confirmDelete() { this.showConfirm = true; }
   cancelDelete() { this.showConfirm = false; }
@@ -73,7 +73,7 @@ export class MessageDetailComponent implements OnInit {
     if (!this.message) return;
     this.deleting = true;
     this.svc.deleteMessage(this.message.id).subscribe({
-      next: () => this.router.navigate(['/messages']),
+      next: () => this.router.navigate([`/${this.messageType.toLowerCase()}/messages`]),
       error: () => { this.deleting = false; this.error = 'Failed to delete. Please try again.'; this.showConfirm = false; },
     });
   }
